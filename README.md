@@ -2,9 +2,14 @@
 ## Getting Started
 This project uses [devbox](https://github.com/jetify-com/devbox) to manage its development environment.
 
-Prerequisits:
+## Prerequisits:
+
 Mount shared folder and enable bidirectional clipboard.
 ```sh
+# Remove sudoer password
+sudo visudo
+# Add NOPASSWD to line "%sudo   ALL=(ALL:ALL) NOPASSWD: ALL"
+
 # Devbox installtion and configuration prerequisits
 sudo apt install curl bzip2 git -y
 
@@ -13,9 +18,24 @@ sudo apt install cntlm redsocks -y
 sudo cp /media/sf_sharedfolder/cntlm.conf /etc/cntlm.conf
 sudo cp /media/sf_sharedfolder/redsocks.conf /etc/redsocks.conf
 sudo cp /media/sf_sharedfolder/redsocks-iptables /usr/local/sbin/redsocks-iptables
+sudo chmod +x /usr/local/sbin/redsocks-iptables
+sudo mkdir -p /etc/systemd/system/redsocks.service.d
+sudo vi /etc/systemd/system/redsocks.service.d/iptables.conf
+# paste following content :
+[Unit]
+Requires=cntlm.service
+After=cntlm.service
+ 
+[Service]
+ExecStartPost=/usr/local/sbin/redsocks-iptables set
+ExecStop=/usr/local/sbin/redsocks-iptables unset
 
 # terminal helpers
 sudo apt install zsh -y
+zsh
+# type "0" and configure desired options and save
+sudo chsh -s $(which zsh) antoine
+# you may have to restart the OS
 
 # restore previous VM config
 cp -r /media/sf_sharedfolder/.zsh_history  /media/sf_sharedfolder/.zsh_aliases /media/sf_sharedfolder/.gitconfig \
@@ -31,14 +51,10 @@ if [ -f ~/.zsh_aliases ]; then
 fi
 ```
 
-Install devbox:
+Install and init devbox:
 ```sh
 curl -fsSL https://get.jetpack.io/devbox | bash
-```
-
-Start the devbox shell:
-```sh 
-devbox shell
+grep -qF 'devbox global shellenv' ~/.zshrc || echo 'eval "$(devbox global shellenv --init-hook)"' >> ~/.zshrc
 ```
 
 Restore VScode config
