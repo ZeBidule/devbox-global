@@ -54,6 +54,7 @@ fi
 Install and init devbox:
 ```sh
 curl -fsSL https://get.jetpack.io/devbox | bash
+devbox global pull git@github.com:ZeBidule/devbox-global.git
 grep -qF 'devbox global shellenv' ~/.zshrc || echo 'eval "$(devbox global shellenv --init-hook)"' >> ~/.zshrc
 ```
 
