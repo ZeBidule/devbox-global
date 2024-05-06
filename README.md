@@ -22,8 +22,7 @@ rm -f packages.microsoft.gpg
 sudo apt install apt-transport-https
 sudo apt update
 sudo apt install code
-sudo cp /media/sf_sharedfolder/settings.json /home/antoine/.config/Code/User/settings.json
-sudo chown -R antoine:antoine /home/antoine/.config/Code/User/settings.json
+# open vscode palete and then "Settings Sync: Show settings"
 
 # Network prerequisits
 sudo apt install cntlm redsocks -y
