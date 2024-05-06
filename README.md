@@ -13,6 +13,18 @@ sudo visudo
 # Devbox installtion and configuration prerequisits
 sudo apt install curl bzip2 git -y
 
+# Install VScode
+sudo apt-get install wget gpg
+wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" |sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null
+rm -f packages.microsoft.gpg
+sudo apt install apt-transport-https
+sudo apt update
+sudo apt install code
+sudo cp /media/sf_sharedfolder/settings.json /home/antoine/.config/Code/User/settings.json
+sudo chown -R antoine:antoine /home/antoine/.config/Code/User/settings.json
+
 # Network prerequisits
 sudo apt install cntlm redsocks -y
 sudo cp /media/sf_sharedfolder/cntlm.conf /etc/cntlm.conf
@@ -38,9 +50,10 @@ sudo chsh -s $(which zsh) antoine
 # you may have to restart the OS
 
 # restore previous VM config
-cp -r /media/sf_sharedfolder/.zsh_history  /media/sf_sharedfolder/.zsh_aliases /media/sf_sharedfolder/.gitconfig \
+sudo cp -r /media/sf_sharedfolder/.zsh_history  /media/sf_sharedfolder/.zsh_aliases /media/sf_sharedfolder/.gitconfig \
     /media/sf_sharedfolder/.ssh /media/sf_sharedfolder/.gpg /media/sf_sharedfolder/.aws /media/sf_sharedfolder/.kube \
-    ${HOME}
+    /home/antoine
+sudo chown -R antoine:antoine $HOME
 ```
 
 Add the following code in your .zshrc :
@@ -56,11 +69,6 @@ Install and init devbox:
 curl -fsSL https://get.jetpack.io/devbox | bash
 devbox global pull git@github.com:ZeBidule/devbox-global.git
 grep -qF 'devbox global shellenv' ~/.zshrc || echo 'eval "$(devbox global shellenv --init-hook)"' >> ~/.zshrc
-```
-
-Restore VScode config
-```sh 
-cp /media/sf_sharedfolder/.config/Code/User/settings.json ${HOME}/.config/Code/User/settings.json
 ```
 
 ## Scripts
