@@ -49,25 +49,30 @@ sudo chsh -s $(which zsh) antoine
 # you may have to restart the OS
 
 # restore previous VM config
-sudo cp -r /media/sf_sharedfolder/.zsh_history  /media/sf_sharedfolder/.zsh_aliases /media/sf_sharedfolder/.gitconfig \
+sudo cp -r /media/sf_sharedfolder/.zsh_history /media/sf_sharedfolder/.zshenv /media/sf_sharedfolder/.zsh_custom /media/sf_sharedfolder/.zsh_aliases \
+    /media/sf_sharedfolder/.gitconfig \
     /media/sf_sharedfolder/.ssh /media/sf_sharedfolder/.gpg /media/sf_sharedfolder/.aws /media/sf_sharedfolder/.kube \
     /home/antoine
 sudo chown -R antoine:antoine $HOME
-```
+if ! grep -qF '$HOME/.zsh_custom' ~/.zshrc; then echo >> ~/.zshrc; echo '# shellcheck disable=SC1091' >> ~/.zshrc; echo '. "$HOME/.zsh_custom"' >> ~/.zshrc; fi
 
-Add the following code in your .zshrc :
-```sh
-# Aliases
-if [ -f ~/.zsh_aliases ]; then
-  . ~/.zsh_aliases
-fi
+# Install AWS-SSO-cli
+update_aws_sso_cli
 ```
 
 Install and init devbox:
 ```sh
 curl -fsSL https://get.jetpack.io/devbox | bash
 devbox global pull git@github.com:ZeBidule/devbox-global.git
-grep -qF 'devbox global shellenv' ~/.zshrc || echo 'eval "$(devbox global shellenv --init-hook)"' >> ~/.zshrc
+```
+
+Clone git repositories:
+```sh
+GITLAB_HOSTNAME=code.tooling.prod.cdsf.io PRIVATE_TOKEN=$GITLAB_GTP_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 5 --auto-approve
+GITLAB_HOSTNAME=code.tooling.prod.cdsf.io PRIVATE_TOKEN=$GITLAB_GTP_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 116 --auto-approve
+GITLAB_HOSTNAME=code.tooling.prod.cdsf.io PRIVATE_TOKEN=$GITLAB_GTP_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 195 --auto-approve
+GITLAB_HOSTNAME=infra.int.be.continental.cloud PRIVATE_TOKEN=$GITLAB_INFRA_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 25 --auto-approve
+GITLAB_HOSTNAME=infra.int.be.continental.cloud PRIVATE_TOKEN=$GITLAB_INFRA_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 6 --auto-approve
 ```
 
 ## Scripts
@@ -76,21 +81,6 @@ Scripts are custom commands that can be run using this project's environment. Th
 * [install-hook-bash](#devbox-run-install-hook-bash)
 * [install-hook-zsh](#devbox-run-install-hook-zsh)
 * [install-starship-prompt](#devbox-run-install-starship-prompt)
-
-## Environment
-
-```sh
-DEVBOX_GLOBAL_PREFIX="$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default"
-DEVBOX_GLOBAL_ROOT="$HOME/.local/share/devbox/global/current"
-```
-
-## Shell Init Hook
-The Shell Init Hook is a script that runs whenever the devbox environment is instantiated. It runs 
-on `devbox shell` and on `devbox run`.
-```sh
-export PS1='📦 devbox> '
-echo 'Welcome to DevBox !
-```
 
 ## Packages
 
