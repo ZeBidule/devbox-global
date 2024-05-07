@@ -15,7 +15,6 @@
     "bat@latest",
     "htop@latest",
     "zoxide@latest",
-    "fzf@latest",
     "fzf-zsh@latest",
     "eza@latest",
     "starship@latest",
@@ -25,17 +24,17 @@
     "dos2unix@latest",
     "k9s@latest",
     "ngrok@latest",
-    "kubecolor@latest"
+    "kubecolor@latest",
+    "vscode@latest",
+    "go@latest",
+    "fzf@latest"
   ],
   "env": {
     "DEVBOX_GLOBAL_PREFIX": "$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default",
     "DEVBOX_GLOBAL_ROOT":   "$HOME/.local/share/devbox/global/current"
   },
   "shell": {
-    "init_hook": [
-      "export PS1='📦 devbox> '",
-      "echo 'Welcome to DevBox !"
-    ],
+    "init_hook": [],
 
     "scripts": {
       "install-hook-bash": [
