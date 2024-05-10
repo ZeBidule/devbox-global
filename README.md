@@ -48,7 +48,7 @@ sudo systemctl restart redsocks.service
 sudo apt install zsh -y
 zsh
 # type "0" and configure desired options and save
-sudo chsh -s $(which zsh) antoine
+sudo chsh -s $(which zsh) $USER
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 sudo apt-get install powerline
 git clone https://github.com/powerline/fonts.git --depth=1
@@ -57,7 +57,7 @@ cd fonts
 cd ..
 rm -rf fonts
 sudo cp /media/sf_sharedfolder/bullet-train.zsh-theme $HOME/.oh-my-zsh/themes/
-sudo chown antoine:antoine $HOME/.oh-my-zsh/themes/bullet-train.zsh-theme
+sudo chown $USER:$USER $HOME/.oh-my-zsh/themes/bullet-train.zsh-theme
 sudo chmod 644 $HOME/.oh-my-zsh/themes/bullet-train.zsh-theme
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
@@ -65,8 +65,8 @@ git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-m
 sudo cp -r /media/sf_sharedfolder/.zsh_history /media/sf_sharedfolder/.zshenv /media/sf_sharedfolder/.zsh_custom /media/sf_sharedfolder/.zsh_aliases \
     /media/sf_sharedfolder/.gitconfig \
     /media/sf_sharedfolder/.ssh /media/sf_sharedfolder/.gpg /media/sf_sharedfolder/.aws /media/sf_sharedfolder/.kube \
-    /home/antoine
-sudo chown -R antoine:antoine $HOME
+    /home/$USER
+sudo chown -R $USER:$USER $HOME
 sudo chmod 400 $HOME/.ssh/*.pem $HOME/.ssh/id_rsa $HOME/.ssh/zebidule
 if ! grep -qF '$HOME/.zsh_custom' ~/.zshrc; then echo >> ~/.zshrc; echo '# shellcheck disable=SC1091' >> ~/.zshrc; echo '. "$HOME/.zsh_custom"' >> ~/.zshrc; fi
 
@@ -89,6 +89,20 @@ kubectl krew install ns
 
 # Install AWS-SSO-cli
 update_aws_sso_cli
+
+# Install Docker
+sudo apt-get update
+sudo apt-get install ca-certificates curl -y
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
+sudo usermod -aG docker $USER
 ```
 
 Clone git repositories:
