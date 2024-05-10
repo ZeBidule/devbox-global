@@ -25,7 +25,6 @@
     "k9s@latest",
     "ngrok@latest",
     "kubecolor@latest",
-    "vscode@latest",
     "go@latest",
     "fzf@latest"
   ],
