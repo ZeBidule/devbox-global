@@ -74,6 +74,19 @@ if ! grep -qF '$HOME/.zsh_custom' ~/.zshrc; then echo >> ~/.zshrc; echo '# shell
 curl -fsSL https://get.jetpack.io/devbox | bash
 devbox global pull git@github.com:ZeBidule/devbox-global.git
 
+# Install K8S helpers
+(
+  set -x; cd "$(mktemp -d)" &&
+  OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+  ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+  KREW="krew-${OS}_${ARCH}" &&
+  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
+  tar zxvf "${KREW}.tar.gz" &&
+  ./"${KREW}" install krew
+)
+kubectl krew install ctx
+kubectl krew install ns
+
 # Install AWS-SSO-cli
 update_aws_sso_cli
 ```
