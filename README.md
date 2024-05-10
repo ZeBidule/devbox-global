@@ -13,6 +13,8 @@ sudo visudo
 # Devbox installtion and configuration prerequisits
 sudo apt install curl bzip2 git -y
 
+# Install virtualbox guest additions
+
 # Install VScode
 sudo apt-get install wget gpg
 wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
@@ -24,6 +26,12 @@ sudo apt update
 sudo apt install code
 # open vscode palete and then "Settings Sync: Show settings"
 
+# Install chrome
+sudo apt-get install libxss1 libappindicator1 libindicator7
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install ./google-chrome*.deb
+rm -f google-chrome*.deb
+
 # Network prerequisits
 sudo apt install cntlm redsocks -y
 sudo cp /media/sf_sharedfolder/cntlm.conf /etc/cntlm.conf
@@ -31,22 +39,27 @@ sudo cp /media/sf_sharedfolder/redsocks.conf /etc/redsocks.conf
 sudo cp /media/sf_sharedfolder/redsocks-iptables /usr/local/sbin/redsocks-iptables
 sudo chmod +x /usr/local/sbin/redsocks-iptables
 sudo mkdir -p /etc/systemd/system/redsocks.service.d
-sudo vi /etc/systemd/system/redsocks.service.d/iptables.conf
-# paste following content :
-[Unit]
-Requires=cntlm.service
-After=cntlm.service
- 
-[Service]
-ExecStartPost=/usr/local/sbin/redsocks-iptables set
-ExecStop=/usr/local/sbin/redsocks-iptables unset
+sudo cp /media/sf_sharedfolder/redsocks.service.d_iptables.conf /etc/systemd/system/redsocks.service.d/iptables.conf
+sudo systemctl daemon-reload
+sudo systemctl restart cntlm.service
+sudo systemctl restart redsocks.service
 
 # terminal helpers
 sudo apt install zsh -y
 zsh
 # type "0" and configure desired options and save
 sudo chsh -s $(which zsh) antoine
-# you may have to restart the OS
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+sudo apt-get install powerline
+git clone https://github.com/powerline/fonts.git --depth=1
+cd fonts
+./install.sh
+cd ..
+rm -rf fonts
+sudo cp /media/sf_sharedfolder/bullet-train.zsh-theme $HOME/.oh-my-zsh/themes/
+sudo chown antoine:antoine $HOME/.oh-my-zsh/themes/bullet-train.zsh-theme
+sudo chmod 644 $HOME/.oh-my-zsh/themes/bullet-train.zsh-theme
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
 # restore previous VM config
 sudo cp -r /media/sf_sharedfolder/.zsh_history /media/sf_sharedfolder/.zshenv /media/sf_sharedfolder/.zsh_custom /media/sf_sharedfolder/.zsh_aliases \
@@ -54,20 +67,20 @@ sudo cp -r /media/sf_sharedfolder/.zsh_history /media/sf_sharedfolder/.zshenv /m
     /media/sf_sharedfolder/.ssh /media/sf_sharedfolder/.gpg /media/sf_sharedfolder/.aws /media/sf_sharedfolder/.kube \
     /home/antoine
 sudo chown -R antoine:antoine $HOME
+sudo chmod 400 $HOME/.ssh/*.pem $HOME/.ssh/id_rsa $HOME/.ssh/zebidule
 if ! grep -qF '$HOME/.zsh_custom' ~/.zshrc; then echo >> ~/.zshrc; echo '# shellcheck disable=SC1091' >> ~/.zshrc; echo '. "$HOME/.zsh_custom"' >> ~/.zshrc; fi
+
+# Install and init devbox
+curl -fsSL https://get.jetpack.io/devbox | bash
+devbox global pull git@github.com:ZeBidule/devbox-global.git
 
 # Install AWS-SSO-cli
 update_aws_sso_cli
 ```
 
-Install and init devbox:
-```sh
-curl -fsSL https://get.jetpack.io/devbox | bash
-devbox global pull git@github.com:ZeBidule/devbox-global.git
-```
-
 Clone git repositories:
 ```sh
+cc git@code.tooling.prod.cdsf.io:oam/ci/gitlab-automation.git
 GITLAB_HOSTNAME=code.tooling.prod.cdsf.io PRIVATE_TOKEN=$GITLAB_GTP_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 5 --auto-approve
 GITLAB_HOSTNAME=code.tooling.prod.cdsf.io PRIVATE_TOKEN=$GITLAB_GTP_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 116 --auto-approve
 GITLAB_HOSTNAME=code.tooling.prod.cdsf.io PRIVATE_TOKEN=$GITLAB_GTP_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 195 --auto-approve
