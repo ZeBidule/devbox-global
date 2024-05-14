@@ -15,7 +15,7 @@ function backup() {
 }
 ```
 
-Mount shared folder and enable bidirectional clipboard.
+In the new VM, mount the shared folder, enable bidirectional clipboard, run the VM and launch the following commands once :
 ```sh
 # Remove sudoer password
 sudo visudo
