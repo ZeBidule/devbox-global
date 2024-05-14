@@ -26,7 +26,10 @@
     "ngrok@latest",
     "kubecolor@latest",
     "go@latest",
-    "fzf@latest"
+    "fzf@latest",
+    "terraform@latest",
+    "docker@latest",
+    "jre@19"
   ],
   "env": {
     "DEVBOX_GLOBAL_PREFIX": "$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default",
@@ -36,21 +39,8 @@
     "init_hook": [],
 
     "scripts": {
-      "install-hook-bash": [
-        "echo adding 'devbox global shellenv' to ~/.bashrc",
-        "grep -qF 'devbox global shellenv' ~/.bashrc || echo 'eval \"$(devbox global shellenv --init-hook)\"' >> ~/.bashrc",
-        "tail -n 1 ~/.bashrc"
-      ],
-      "install-hook-zsh": [
-        "echo adding 'devbox global shellenv' to ~/.zshrc",
-        "grep -qF 'devbox global shellenv' ~/.zshrc || echo 'eval \"$(devbox global shellenv --init-hook)\"' >> ~/.zshrc",
-        "tail -n 1 ~/.zshrc"
-      ],
-      "install-starship-prompt": [
-        "if [ ! -f $HOME/.config/starship.toml ]",
-        "then",
-        "curl -fsSL https://raw.githubusercontent.com/yogeek/devbox-global/main/config/starship/starship.toml > $HOME/.config/starship.toml",
-        "fi"
+      "example": [
+        "echo 'devbox example script'"
       ]
     }
   }
