@@ -66,6 +66,7 @@ sudo cp -r /media/sf_sharedfolder/.zsh_history /media/sf_sharedfolder/.zshenv /m
     /media/sf_sharedfolder/.gitconfig \
     /media/sf_sharedfolder/.ssh /media/sf_sharedfolder/.gpg /media/sf_sharedfolder/.aws /media/sf_sharedfolder/.kube \
     /home/$USER
+sudo cp /media/sf_sharedfolder/Bookmarks ~/.config/google-chrome/Default 
 sudo chown -R $USER:$USER $HOME
 sudo chmod 400 $HOME/.ssh/*.pem $HOME/.ssh/id_rsa $HOME/.ssh/zebidule
 if ! grep -qF '$HOME/.zsh_custom' ~/.zshrc; then echo >> ~/.zshrc; echo '# shellcheck disable=SC1091' >> ~/.zshrc; echo '. "$HOME/.zsh_custom"' >> ~/.zshrc; fi
