@@ -25,6 +25,7 @@ sudo apt install apt-transport-https
 sudo apt update
 sudo apt install code
 # open vscode palete and then "Settings Sync: Show settings"
+fix_jenkins_vscode_plugin
 
 # Install chrome
 sudo apt-get install libxss1 libappindicator1 libindicator7
@@ -86,6 +87,7 @@ devbox global pull git@github.com:ZeBidule/devbox-global.git
 )
 kubectl krew install ctx
 kubectl krew install ns
+kubectl krew install view-secret
 
 # Install AWS-SSO-cli
 update_aws_sso_cli
