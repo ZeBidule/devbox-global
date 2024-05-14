@@ -3,6 +3,18 @@ This project uses [devbox](https://github.com/jetify-com/devbox) to manage its d
 
 ## Prerequisits:
 
+In your previous VM, make sure to backup all important files :
+```sh
+function backup() {
+  sudo cp -Lr "${HOME}/.zsh_history" "${HOME}/.zshenv" "${HOME}/.zsh_custom" "${HOME}/.zsh_aliases" "${HOME}/.gitconfig" \
+    "${HOME}/.ssh" "${HOME}/.gpg" "${HOME}/.aws" "${HOME}/.config/google-chrome/Default/Bookmarks" \
+    /etc/cntlm.conf /etc/redsocks.conf /usr/local/sbin/redsocks-iptables \
+    /media/sf_sharedfolder
+  sudo mkdir -p /media/sf_sharedfolder/.kube
+  sudo cp -r "${HOME}/.kube/kubeconfig"* "/media/sf_sharedfolder/.kube"
+}
+```
+
 Mount shared folder and enable bidirectional clipboard.
 ```sh
 # Remove sudoer password
