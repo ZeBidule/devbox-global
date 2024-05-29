@@ -24,7 +24,7 @@ sudo visudo
 # Devbox installtion and configuration prerequisits
 sudo apt install curl bzip2 git -y
 
-# Install virtualbox guest additions
+# => Install virtualbox guest additions using the Ubuntu UI
 
 # Install VScode
 sudo apt-get install wget gpg
@@ -74,13 +74,13 @@ sudo chmod 644 $HOME/.oh-my-zsh/themes/bullet-train.zsh-theme
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
 # restore previous VM config
-sudo cp -r /media/sf_sharedfolder/.zsh_history /media/sf_sharedfolder/.zshenv /media/sf_sharedfolder/.zsh_custom /media/sf_sharedfolder/.zsh_aliases \
+sudo usermod -aG vboxsf $USER
+cp -r /media/sf_sharedfolder/.zsh_history /media/sf_sharedfolder/.zshenv /media/sf_sharedfolder/.zsh_custom /media/sf_sharedfolder/.zsh_aliases \
     /media/sf_sharedfolder/.gitconfig \
     /media/sf_sharedfolder/.ssh /media/sf_sharedfolder/.gpg /media/sf_sharedfolder/.aws /media/sf_sharedfolder/.kube \
     /home/$USER
-sudo cp /media/sf_sharedfolder/Bookmarks ~/.config/google-chrome/Default 
-sudo chown -R $USER:$USER $HOME
-sudo chmod 400 $HOME/.ssh/*.pem $HOME/.ssh/id_rsa $HOME/.ssh/zebidule
+cp /media/sf_sharedfolder/Bookmarks ~/.config/google-chrome/Default 
+chmod 400 $HOME/.ssh/*.pem $HOME/.ssh/id_rsa $HOME/.ssh/zebidule
 if ! grep -qF '$HOME/.zsh_custom' ~/.zshrc; then echo >> ~/.zshrc; echo '# shellcheck disable=SC1091' >> ~/.zshrc; echo '. "$HOME/.zsh_custom"' >> ~/.zshrc; fi
 
 # Install and init devbox
