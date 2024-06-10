@@ -29,7 +29,9 @@
     "fzf@latest",
     "terraform@latest",
     "docker@latest",
-    "jre@19"
+    "jre@19",
+    "ansible@latest",
+    "istioctl@latest"
   ],
   "env": {
     "DEVBOX_GLOBAL_PREFIX": "$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default",
