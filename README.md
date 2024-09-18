@@ -62,15 +62,10 @@ zsh
 # type "0" and configure desired options and save
 sudo chsh -s $(which zsh) $USER
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-sudo apt-get install powerline
-git clone https://github.com/powerline/fonts.git --depth=1
-cd fonts
-./install.sh
-cd ..
-rm -rf fonts
-sudo cp /media/sf_sharedfolder/bullet-train.zsh-theme $HOME/.oh-my-zsh/themes/
-sudo chown $USER:$USER $HOME/.oh-my-zsh/themes/bullet-train.zsh-theme
-sudo chmod 644 $HOME/.oh-my-zsh/themes/bullet-train.zsh-theme
+wget https://raw.githubusercontent.com/mcarvalho1/Nerd-fonts-Downloader-Script/master/nf_downloader.sh
+chmod +x nf_downloader.sh
+./nf_downloader.sh
+# Choose at least "NerdFontsSymbolsOnly" + any other font you need for your starship configuration
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
 # restore previous VM config
