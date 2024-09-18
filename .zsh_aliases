@@ -1,0 +1,464 @@
+#!/bin/bash
+
+# Personnal aliases
+alias rea='. ${HOME}/.zsh_aliases && . ${HOME}/.zshenv'
+alias eda='code ${HOME}/.zsh_aliases'
+alias ede='code ${HOME}/.zshenv'
+alias edc='code ${HOME}/.zsh_custom'
+alias eds='code ${HOME}/.config/starship.toml'
+alias edd='code $(devbox global path)/devbox.json'
+
+alias connect='proxy_start && update_vscode_jenkins_plugin_token && sfa'
+
+alias c='code'
+alias cr='code -r'
+
+alias dr='devbox run'
+alias tt='devbox run test'
+
+alias get_arti_log='scp repo.tooling.prod.cdsf.io:/data/artifactory/log/artifactory-service.log .'
+
+GOPATH=$(go env GOPATH)
+export PATH="$PATH:$GOPATH/bin"
+
+alias sc='search_code'
+function search_code() {
+  grep -I -R "$1" "${HOME}/dev"
+}
+
+alias findz="find ./* -type f | fzf --preview 'bat --color=always {}' --preview-window '~3'"
+
+function update() {
+  devbox version update
+  eval "$(devbox global shellenv --recompute)"
+  refresh-global
+  devbox update
+  refresh-global
+  update_aws_sso_cli
+}
+
+function get_last_addon_template() {
+  cp "${HOME}/dev/oam.k8s.addons.addon-template/."* .
+  cp -r "${HOME}/dev/oam.k8s.addons.addon-template/"* .
+  rm ./oam_k8s_addons_addon-template_export.tar.gz
+}
+
+function backup() {
+  sudo cp -Lr "${HOME}/.zsh_history" "${HOME}/.zshenv" "${HOME}/.zsh_custom" "${HOME}/.zsh_aliases" \
+    "${HOME}/.config/starship.toml" "${HOME}/.gitconfig" \
+    "${HOME}/.ssh" "${HOME}/.gpg" "${HOME}/.aws" "${HOME}/.config/google-chrome/Default/Bookmarks" \
+    /etc/cntlm.conf /etc/redsocks.conf /usr/local/sbin/redsocks-iptables \
+    /media/sf_sharedfolder
+  sudo mkdir -p /media/sf_sharedfolder/.kube
+  sudo cp -r "${HOME}/.kube/kubeconfig"* "/media/sf_sharedfolder/.kube"
+}
+
+function free_space() {
+  df -h /dev/sda2
+  echo "------------------------------------------------"
+  sudo apt-get clean
+  sudo apt autoclean
+  sudo apt-get autoremove --purge
+  [[ -d "${HOME}/.cache/cloud-code/installer" ]] && rm -rf "${HOME}/.cache/cloud-code/installer"
+  # go clean -cache -modcache -i -r
+  [[ -d "/var/lib/snapd/cache" ]] && rm -rf /var/lib/snapd/cache/*
+  sudo journalctl --rotate
+  sudo journalctl --vacuum-time=1s > /dev/null 2>&1
+  docker system prune -a -f --volumes
+  for item in $(find "${HOME}" -name ".terraform" -type d | grep -E "^/home"); do rm -rf "$item"; done
+  nix-store --gc
+  echo "------------------------------------------------"
+  df -h /dev/sda2
+  echo "------------------------------------------------"
+}
+
+########################################
+#                Git
+########################################
+alias gicp='git cherry-pick'
+alias gil='git log --graph --oneline --color --decorate'
+alias gir="git_rebase_origin"
+alias giri='git rebase -i '
+alias girst='git reset --hard '
+alias gip='git update-index --chmod=+x '
+alias giap='git commit --amend --no-edit && git push -f'
+alias gidb='deleteOldBranches'
+alias girsto='git_reset_to_origin'
+alias girc='GIT_EDITOR=true git rebase --continue'
+alias gdb='delete_git_branch'
+alias cc='clonecode'
+
+function delete_git_branch() {
+  if [[ $1 != "" ]]
+  then
+    git push --delete origin $1
+  fi
+  deleteOldBranches
+}
+
+function close_git_branch() {
+  source_branch=$1
+  if [[ -z $source_branch ]]
+  then
+    source_branch=$(get_main_branch_name)
+  fi
+  git_rebase_origin "$source_branch"
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  git checkout "$source_branch"
+  git pull
+  git merge "$current_branch"
+  git branch -D "$current_branch"
+  git push --delete origin "$current_branch"
+}
+
+function git_rebase_origin() {
+  source_branch=$1
+  if [[ -z $source_branch ]]
+  then
+    source_branch=$(get_main_branch_name)
+  fi
+  git fetch && git rebase "origin/$source_branch"
+}
+
+function get_main_branch_name() {
+  if [[ ! -z $(git ls-remote --heads origin master) ]];
+  then
+    echo "master"
+  else
+    echo "main"
+  fi
+}
+
+function git_reset_to_origin() {
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  if [[ $current_branch != "" ]];
+  then
+    git reset --hard origin/$current_branch
+  fi
+}
+
+function deleteOldBranches() {
+  git fetch -p
+  git branch -vv | grep ': gone]'| grep -v "\*" | awk '{ print $1; }' | xargs -r git branch -D
+  branches=$(git branch -a)
+  echo "$branches"
+}
+
+function deleteOldBranchesInEachRepo() {
+  for git_folder in "${HOME}/dev/"*/.git
+  do
+    [[ -d "$git_folder" ]] || continue
+    cd "${git_folder%/.git}" && deleteOldBranches
+  done
+}
+
+function clonecode() {
+  git_url=$1
+  target_dir=$(echo "$git_url" | perl -lne 'print $1 if /git@.+:(.+)\.git/' | tr '/' '.')
+  if [[ "$target_dir" == "" ]]
+  then
+    target_dir=$(echo "$git_url" | perl -lne 'print $1 if /https:\/\/.+?\/(.+)\.git/' | tr '/' '.')
+  fi
+  if [[ "$target_dir" == "" ]]
+  then
+    echo -e "${RED}Error, malformed git URL : '$git_url' don't match 'git@xxx:xxx.git' nor 'https://xxx/xxx.git'"
+    return 1
+  fi
+  if [[ ! -d "${HOME}/dev/$target_dir" ]]
+  then
+    echo "=> Git clone \"$target_dir\""
+    git clone "$git_url" "${HOME}/dev/$target_dir"
+  fi
+  echo "=> Open \"$target_dir\" in VScode"
+  code "${HOME}/dev/$target_dir"
+}
+
+
+function custom_rebase() {
+  if [[ "$1" == "" ]];
+  then
+    echo -e "${RED}Error, one argument required : git ref of new desired base"
+    return 1
+  fi
+  tmp=$(mktemp)
+  git archive --format=tar HEAD > $tmp
+  git reset --hard $1
+  if [[ "$2" == "-d" ]];
+  then
+    rm -rf *
+  fi
+  tar xf $tmp
+  rm -f $tmp
+}
+
+########################################
+#             Docker
+########################################
+function docker_prune() {
+    docker container prune
+    docker image prune
+}
+function docker_run() {
+    docker run --rm -it --network=host -u root -v "$(pwd):/current" -w /current --entrypoint "" -v "${HOME}/.ssh:/root/.ssh" -v "${HOME}/.aws:/root/.aws" -e AWS_PROFILE -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e ANSIBLE_SSH_ARGS="-F /dev/null" "$@"
+}
+function docker_bash() {
+    docker_run "$1" bash
+}
+function docker_sh() {
+    docker_run "$1" sh
+}
+function docker_enter() {
+    docker_bash $1 || docker_sh $1
+}
+
+alias dop='docker_prune'
+alias dor='docker_run'
+alias dob='docker_bash'
+alias dos='docker_sh'
+alias doi='docker images'
+alias doe='docker_enter'
+
+alias push_to_all_ecr='$HOME/dev/oam.builds.jenkins.shared-lib.common/resources/gtp/push_to_ecr.sh -e all -i '
+
+# Portainer
+alias portainer='docker run -d -p 9001:9000 --name portainer -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer'
+alias portainer_stop='docker rm -f portainer'
+
+########################################
+#                 K8S
+########################################
+# shellcheck disable=SC1090
+source <(kubectl completion zsh)
+
+# alias kon='kubeon'
+alias kns='kubectl ns'
+# alias kcx='kcx'
+alias kcx='set_kubeconfigs && kubectl ctx'
+alias kga='kubectl get all'
+alias kgn='kubectl get nodes'
+alias kgap='kubectl get app -n argocd'
+alias kgas='kubectl get appset -n argocd'
+alias kg='kubectl get'
+alias kgy='kubectl get -o yaml'
+alias kgj='kubectl get -o json'
+alias kd='kubectl describe'
+alias kdr='kubectl describe rollout'
+alias kda='kubectl describe analysisruns'
+alias klf='kubectl logs -f --tail 100'
+alias kkyv='kubectl describe polr | grep "Result: \+fail" -B10'
+alias kgpf='kubectl get po -A | grep -v Running | grep -v Completed'
+alias kgps='kubectl get pods -A -o wide --field-selector spec.nodeName='
+alias kgi='kubectl get pods -o jsonpath="{..image}" | tr -s "[[:space:]]" "\n" | sort | uniq -c'
+alias kgia='kubectl get pods -A -o jsonpath="{..image}" | tr -s "[[:space:]]" "\n" | sort | uniq -c'
+
+alias argocdpf='argocd --plaintext --grpc-web --insecure --port-forward --port-forward-namespace argocd'
+
+alias kindkc='export KUBECONFIG="$HOME/.kind/config" && kind get kubeconfig > "$HOME/.kind/config"'
+
+function k_get_all() {
+  # shellcheck disable=SC2068
+  NAMES="$(kubectl api-resources \
+                  --namespaced \
+                  --verbs list \
+                  -o name | tr '\n' ,)" \
+  && export NAMES && kubectl get "${NAMES:0:-1}" --show-kind $@
+}
+
+function k_remove_finalizers() {
+  kubectl patch $1 --type json --patch='[ { "op": "remove", "path": "/metadata/finalizers" } ]'
+}
+
+function k_force_remove_finalizers() {
+  namespace=$1
+  kubectl get ns "$namespace" -o json | jq '.spec = {"finalizers":[]}' | kubectl replace --raw "/api/v1/namespaces/$namespace/finalize" -f
+}
+
+function kg_composition_errors() {
+  kubectl get "$1" "$2" -o=jsonpath='{.spec.resourceRef}{" "}{.spec.resourceRefs}' | jq '.[] | select( .name == null)'
+}
+
+function enable_argocd() {
+  kubectl scale sts,deploy --replicas 1 --all -n argocd
+}
+
+function disable_argocd() {
+  kubectl scale sts,deploy --replicas 0 --all -n argocd
+}
+
+function kubeops() {
+  echo "Searching kube config..."
+  if [ -z "$1" ]; then
+    if [[ -e $KUBECONFIG ]]; then 
+      echo "No argument => loading current KUBECONFIG ($KUBECONFIG) !"
+      CONFIGFILE=$(basename $KUBECONFIG)
+    else
+      echo "No KUBECONFIG : Either set KUBECONFIG env var or pass a kubeconfig name as argument"
+      echo ""
+      echo "Usage: ${0} <kube-config-name> "
+      echo ""
+      echo "------------------------------------"
+      echo "List of available kube config :"
+      echo "------------------------------------"
+      find ${HOME}/.kube/ -maxdepth 1 -name "*config*" -exec sh -c 'basename "$1"' find-sh {} \;
+      return
+    fi
+  else
+    CONFIGFILE=${1}
+  fi
+  echo "Using kube config : ${CONFIGFILE}..."
+  docker run -it --net=host -v "${HOME}:${HOME}" hjacobs/kube-ops-view --kubeconfig-path="${HOME}/.kube/${CONFIGFILE}"
+}
+
+function k() {
+  kubectl "$@"
+}
+
+function kimg () {
+  cat << EOF > "${HOME}/.kube/k8s-images.fmt"
+NAMESPACE            NAME           IMAGE            INIT_IMAGE
+metadata.namespace   metadata.name  spec.containers[0].image    spec.initContainers[0].image
+EOF
+  kubectl get pods -o custom-columns-file="${HOME}/.kube/k8s-images.fmt" "$@"
+}
+
+function convert_to_kustomize {
+  dir=${1:=.}
+  [[ -f ".version" ]] && source .version
+  pushd "$dir" || return
+  [[ -f "kustomization.yaml" ]] && rm "kustomization.yaml"
+  [[ -d "result" ]] && rm -rf "result"
+  kustomize create
+  [[ $ADDON_NAMESPACE != "" ]] && kustomize edit set namespace "$ADDON_NAMESPACE"
+  find . -type f -name '*.yaml' -not -path "./kustomization.yaml" -exec sh -c 'kustomize edit add resource "$1"' find-sh {} \;
+  mkdir "result"
+  kustomize build . -o result
+  popd > /dev/null 2>&1 || true
+}
+
+############################################################
+#                       Terraform
+############################################################
+
+function tfinit() {
+  rm -rf ".terraform"
+  mkdir ".terraform"
+  cp "$HOME/.terraform.d/providers_cache/.terraform.lock.hcl" ".terraform"
+  cp -R "$HOME/.terraform.d/providers_cache/providers" ".terraform"
+  terraform init -reconfigure -get=true -upgrade=true
+}
+
+function get_tf_backend_s3_path() {
+  bucket=$(grep -ohP 'bucket\s*=\s+"\K[^"]+' backend.tf)
+  workspace_key_prefix=$(grep -ohP 'workspace_key_prefix\s*=\s+"\K[^"]+' backend.tf)
+  key=$(grep -ohP 'key\s*=\s+"\K[^"]+' backend.tf)
+
+  echo "s3://${bucket}/${workspace_key_prefix}/${TERRAFORM_WORKSPACE:=PROD}/${key}"
+}
+function show_tf_backend() {
+  aws --profile backend s3 cp "$(get_tf_backend_s3_path)" -
+}
+function pull_tf_backend() {
+  aws --profile backend s3 cp "$(get_tf_backend_s3_path)" "$(grep -ohP 'key\s*=\s+"\K[^"]+' backend.tf).json"
+}
+function push_tf_backend() {
+  aws --profile backend s3 cp "$(get_tf_backend_s3_path)" "$(get_tf_backend_s3_path).backup" \
+  && echo 'backup created !' \
+  && aws --profile backend s3 cp "$(grep -ohP 'key\s*=\s+"\K[^"]+' backend.tf).json" "$(get_tf_backend_s3_path)"
+}
+
+##################################################################
+#                          Certificates
+##################################################################
+function gencert() {
+  mkdir -p /tmp/cert
+  echo "test DNS command : dig -t txt +short _acme-challenge.${1} @8.8.8.8"
+  docker run --rm -it --network=host -v /tmp/cert:/etc/letsencrypt certbot/certbot certonly --manual -d $1 -d \*.$1 --preferred-challenges dns && \
+  sudo mv "${HOME}/.certs/${1}.pem" "${HOME}/.certs/${1}_$(date '+%Y%m%d').pem" | true && \
+  sudo mv "${HOME}/.certs/${1}.key" "${HOME}/.certs/${1}_$(date '+%Y%m%d').key" | true && \
+  sudo cp /tmp/cert/live/${1}/fullchain.pem ${HOME}/.certs/${1}.pem && \
+  sudo cp /tmp/cert/live/${1}/privkey.pem ${HOME}/.certs/${1}.key && \
+  sudo chown "${USER}:" "${HOME}/.certs/${1}."* && \
+  sudo rm -rf /tmp/cert
+  ls -lrt ${HOME}/.certs
+}
+
+##################################################################
+#                              SSH
+##################################################################
+function import_ssh_key() {
+  if [[ "$1" == "" ]];
+  then
+    ls /media/sf_sharedfolder/.ssh
+  else
+    cp /media/sf_sharedfolder/.ssh/$1 ${HOME}/.ssh
+    chmod 400 ${HOME}/.ssh/$1
+  fi
+}
+
+function write_public_ssh_key() {
+  ssh-keygen -y -f ${HOME}/.ssh/$1 > ${HOME}/.ssh/${1%.pem}.pub
+  chmod 644 ${HOME}/.ssh/${1%.pem}.pub
+}
+
+function set_ssh_config() {
+  if [[ "$1" == "" ]];
+  then
+    ln -sf ${HOME}/.ssh/config_global ${HOME}/.ssh/config
+  else
+    ln -sf ${HOME}/.ssh/config_$1 ${HOME}/.ssh/config
+  fi
+}
+
+function manage_pgp() {
+  gpg --list-secret-keys --keyid-format LONG
+  echo "Create new key : vi ${HOME}/.gpg/config && gpg --batch --gen-key config"
+  echo "Delete key : gpg --delete-secret-and-public-key --batch --yes XXXXXXXXXXXXXXXXX"
+  echo "Import key : gpg --import ${HOME}/.gpg/xxxxxxxxxxx.asc"
+  echo "Export public key : gpg --export --armor XXXXXXXXXXXXXXXXX > ${HOME}/.gpg/gpg_xxxxxxxxxxx_public.asc && chmod 644 ${HOME}/.gpg/gpg_xxxxxxxxxxx_public.asc"
+  echo "Export private key : gpg --export-secret-keys --armor XXXXXXXXXXXXXXXXX > ${HOME}/.gpg/gpg_xxxxxxxxxxx.asc && chmod 400 ${HOME}/.gpg/gpg_xxxxxxxxxxx.asc"
+}
+
+#################################
+# AWS
+#################################
+
+function check_aws_connection() {
+  echo -en "${DEFAULT}Check AWS connection using '$AWS_PROFILE' profile : "
+  if aws sts get-caller-identity
+  then
+    echo -e "${GREEN}OK"
+    return 0
+  else
+    echo -e "${RED}KO"
+    return 1
+  fi
+}
+
+function aws_decode-authorization-message() {
+  aws sts decode-authorization-message --encoded-message $1 --query 'DecodedMessage' --output text | jq
+}
+
+#################################
+# GCP
+#################################
+alias gcl='gcloud auth login --no-launch-browser && gcloud config set project gcpxxx-xxx'
+alias get_cops_management_kubeconfig='get_gke_kubeconfig xxx'
+alias get_cops_kubeconfig='get_gke_kubeconfig xxx'
+
+function get_gke_kubeconfig {
+  CLUSTER_NAME=$1
+  if [[ "$CLUSTER_NAME" == "" ]];
+  then
+    echo -e "${RED}Error, 1 argument required : CLUSTER_NAME"
+    echo -e "${DEFAULT}------"
+    gcloud container clusters list
+    return 1
+  fi
+  export KUBECONFIG="${HOME}/.kube/kubeconfig_gcp_${CLUSTER_NAME}"
+  [[ -f $KUBECONFIG ]] && rm "$KUBECONFIG"
+  touch "$KUBECONFIG"
+  gcloud container clusters get-credentials "${CLUSTER_NAME}" --region europe-west3 --project gcp1002d-i3x5x6ms
+  # kubeon
+  kubectl cluster-info
+  kubectl get ns
+}

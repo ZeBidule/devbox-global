@@ -1,0 +1,166 @@
+#!/bin/bash
+
+# #####################################
+# oh-my-zsh configuration
+# #####################################
+# shellcheck disable=SC2034
+# ZSH_THEME="bullet-train"
+
+# shellcheck disable=SC2034
+# BULLETTRAIN_PROMPT_ORDER=(
+#   time
+#   status
+#   dir
+#   git
+#   aws
+#   terraform
+#   cmd_exec_time
+# )
+
+#Terraform Profile
+# BULLETTRAIN_TF_BG=blue
+# BULLETTRAIN_TF_FG=white
+# BULLETTRAIN_TF_PREFIX=T
+# prompt_terraform() {
+#   local spaces=" "
+
+#   if [ -d .terraform ]
+#   then
+#     prompt_segment $BULLETTRAIN_TF_BG $BULLETTRAIN_TF_FG "$BULLETTRAIN_TF_PREFIX$spaces$(tf_prompt_info)"
+#   fi
+# }
+
+# shellcheck disable=SC2034
+# plugins=(git docker kubectl terraform aws colored-man-pages zsh-autosuggestions kube-ps1)
+plugins=(colored-man-pages zsh-autosuggestions)
+
+# shellcheck disable=SC1091
+source "$ZSH/oh-my-zsh.sh"
+
+# #####################################
+# Load devbox tools
+# #####################################
+eval "$(devbox global shellenv --init-hook)"
+if [[ -e "/home/antoine/.nix-profile/etc/profile.d/nix.sh" ]]
+then
+  # shellcheck disable=SC1091
+  . "/home/antoine/.nix-profile/etc/profile.d/nix.sh"
+fi # added by Nix installer
+
+# #####################################
+# Load aliases
+# #####################################
+# shellcheck disable=SC1091
+. "$HOME/.zsh_aliases"
+
+# #####################################
+# Load fzf completion
+# #####################################
+if [[ -n "${commands[fzf-share]}" ]]
+then
+  # shellcheck disable=SC1091
+  source "$(fzf-share)/key-bindings.zsh"
+  # shellcheck disable=SC1091
+  source "$(fzf-share)/completion.zsh"
+fi
+
+# #####################################
+# Add K8S context in prompt
+# #####################################
+# shellcheck disable=SC2016
+# PROMPT=$PROMPT'$(kube_ps1) '
+# kube_ps1() {
+#   [[ "${KUBE_PS1_ENABLED}" == "off" ]] && return
+#   [[ -z "${KUBE_PS1_CONTEXT}" ]] && [[ "${KUBE_PS1_CONTEXT_ENABLE}" == true ]] && return
+
+#   local KUBE_PS1
+#   local KUBE_PS1_RESET_COLOR="${_KUBE_PS1_OPEN_ESC}${_KUBE_PS1_DEFAULT_FG}${_KUBE_PS1_CLOSE_ESC}"
+
+#   # Background Color
+#   [[ -n "${KUBE_PS1_BG_COLOR}" ]] && KUBE_PS1+="$(_kube_ps1_color_bg ${KUBE_PS1_BG_COLOR})"
+
+#   # Prefix
+#   if [[ -z "${KUBE_PS1_PREFIX_COLOR:-}" ]] && [[ -n "${KUBE_PS1_PREFIX}" ]]; then
+#       KUBE_PS1+="${KUBE_PS1_PREFIX}"
+#   else
+#       KUBE_PS1+="$(_kube_ps1_color_fg $KUBE_PS1_PREFIX_COLOR)${KUBE_PS1_PREFIX}${KUBE_PS1_RESET_COLOR}"
+#   fi
+
+#   # Symbol
+#   KUBE_PS1+="$(_kube_ps1_color_fg $KUBE_PS1_SYMBOL_COLOR)$(_kube_ps1_symbol)${KUBE_PS1_RESET_COLOR}"
+
+#   if [[ -n "${KUBE_PS1_SEPARATOR}" ]] && [[ "${KUBE_PS1_SYMBOL_ENABLE}" == true ]]; then
+#     KUBE_PS1+="${KUBE_PS1_SEPARATOR}"
+#   fi
+
+#   # Context
+#   if [[ "${KUBE_PS1_CONTEXT_ENABLE}" == true ]]; then
+#     KUBE_PS1_SMALL_CONTEXT=$(echo $KUBE_PS1_CONTEXT | cut -d @ -f 2)
+#     if [[ "$(echo $KUBE_PS1_CONTEXT | cut -d @ -f 3)" != "" ]]; then
+#       KUBE_PS1_SMALL_CONTEXT=$(echo $KUBE_PS1_CONTEXT | cut -d @ -f 3)
+#     fi
+#     KUBE_PS1+="$(_kube_ps1_color_fg $KUBE_PS1_CTX_COLOR)${KUBE_PS1_SMALL_CONTEXT}${KUBE_PS1_RESET_COLOR}"
+#   fi
+
+#   # Namespace
+#   if [[ "${KUBE_PS1_NS_ENABLE}" == true ]]; then
+#     if [[ -n "${KUBE_PS1_DIVIDER}" ]] && [[ "${KUBE_PS1_CONTEXT_ENABLE}" == true ]]; then
+#       KUBE_PS1+="${KUBE_PS1_DIVIDER}"
+#     fi
+#     KUBE_PS1+="$(_kube_ps1_color_fg ${KUBE_PS1_NS_COLOR})${KUBE_PS1_NAMESPACE}${KUBE_PS1_RESET_COLOR}"
+#   fi
+
+#   # Suffix
+#   if [[ -z "${KUBE_PS1_SUFFIX_COLOR:-}" ]] && [[ -n "${KUBE_PS1_SUFFIX}" ]]; then
+#       KUBE_PS1+="${KUBE_PS1_SUFFIX}"
+#   else
+#       KUBE_PS1+="$(_kube_ps1_color_fg $KUBE_PS1_SUFFIX_COLOR)${KUBE_PS1_SUFFIX}${KUBE_PS1_RESET_COLOR}"
+#   fi
+
+#   # Close Background color if defined
+#   [[ -n "${KUBE_PS1_BG_COLOR}" ]] && KUBE_PS1+="${_KUBE_PS1_OPEN_ESC}${_KUBE_PS1_DEFAULT_BG}${_KUBE_PS1_CLOSE_ESC}"
+
+#   echo "${KUBE_PS1}"
+# }
+# kubeoff
+
+# ############################################
+# Prompt
+# ############################################
+eval "$(starship init zsh)"
+
+
+# fix ansible launch
+export LC_ALL="C.UTF-8"
+
+# ############################################
+# Commands to launch at each terminal start
+# ############################################
+
+if [[ ! -f "$HOME/.last_update" || $(cat "$HOME/.last_update") -lt $(date -d '1 week ago' '+%s') ]]
+then
+  update
+  date '+%s' > "$HOME/.last_update"
+fi
+
+if [[ ! -f "$HOME/.last_free_space" || $(cat "$HOME/.last_free_space") -lt $(date -d '1 day ago' '+%s') ]]
+then
+  free_space
+  date '+%s' > "$HOME/.last_free_space"
+fi
+
+if [[ $(systemctl is-active cntlm.service) != "active" || $(systemctl is-active redsocks.service) != "active" ]]
+then
+  proxy_start
+fi
+
+if [[ ! -f "$HOME/.last_update_vscode_jenkins_plugin_token" || $(cat "$HOME/.last_update_vscode_jenkins_plugin_token") != $(date '+%d/%m/%Y') ]]
+then
+  update_vscode_jenkins_plugin_token
+  date '+%d/%m/%Y' > "$HOME/.last_update_vscode_jenkins_plugin_token"
+fi
+
+if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
+then
+  sfa
+fi

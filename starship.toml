@@ -1,0 +1,60 @@
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Inserts a blank line between shell prompts
+add_newline = true
+
+# https://starship.rs/config/#character
+[character]
+success_symbol = '[➜](bold green)'
+error_symbol = '[✗](bold red) '
+
+# https://starship.rs/config/#cmd_duration
+[cmd_duration]
+min_time = 5000
+format = 'underwent [$duration](bold yellow)'
+
+# https://starship.rs/config/#git_branch
+[git_branch]
+disabled = false
+# ignore_branches = ['master', 'main']
+
+# Disable the package module, hiding it from the prompt completely
+[package]
+disabled = true
+
+[aws]
+disabled = false
+style = "yellow"
+symbol = ''
+
+# https://starship.rs/config/#kubernetes
+[kubernetes]
+disabled = false
+contexts = [
+  # https://starship.rs/advanced-config/#style-strings
+  # DEV/TEST clusters
+  { context_pattern = ".+@k8s-integration-dev.+", context_alias = "k8s-int-dev", style = "bold #808080" },
+  { context_pattern = ".+@apigw-integration-dev.+", context_alias = "apigw-int-dev", style = "underline bold #808080" },
+  { context_pattern = ".+@k8s-integration-test.+", context_alias = "k8s-int-test", style = "bold #808080" },
+  { context_pattern = ".+@apigw-integration-test.+", context_alias = "apigw-int-test", style = "underline bold #808080" },
+  { context_pattern = ".+@k8s-validation-dev.+", context_alias = "k8s-val-dev", style = "bold #808080" },
+  { context_pattern = ".+@apigw-validation-dev.+", context_alias = "apigw-val-dev", style = "underline bold #808080" },
+  { context_pattern = ".+@k8s-validation-test.+", context_alias = "k8s-val-test", style = "bold #808080" },
+  { context_pattern = ".+@apigw-validation-test.+", context_alias = "apigw-val-test", style = "underline bold #808080" },
+  { context_pattern = ".+-dev-.+", style = "bold #808080" },
+  { context_pattern = ".+-test-.+", style = "bold #808080" },
+  # PROD clusters
+  { context_pattern = ".+@k8s-integration.+", context_alias = "k8s-int", style = "bold green" },
+  { context_pattern = ".+@apigw-integration.+", context_alias = "apigw-int", style = "underline bold green" },
+  { context_pattern = ".+@k8s-validation.+", context_alias = "k8s-int", style = "bold #FFA500" },
+  { context_pattern = ".+@apigw-validation.+", context_alias = "apigw-int", style = "underline bold #FFA500" },
+  { context_pattern = ".+@k8s-production.+", context_alias = "k8s-int", style = "bold red" },
+  { context_pattern = ".+@apigw-production.+", context_alias = "apigw-int", style = "underline bold red" },
+]
+
+# https://starship.rs/config/#nix_shell
+[nix_shell]
+disabled = true
+impure_msg = 'devbox'
+format = 'via [$symbol$state](bold blue) '
