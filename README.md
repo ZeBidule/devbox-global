@@ -123,35 +123,3 @@ GITLAB_HOSTNAME=code.tooling.prod.cdsf.io PRIVATE_TOKEN=$GITLAB_GTP_PRIVATE_TOKE
 GITLAB_HOSTNAME=infra.int.be.continental.cloud PRIVATE_TOKEN=$GITLAB_INFRA_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 25 --auto-approve
 GITLAB_HOSTNAME=infra.int.be.continental.cloud PRIVATE_TOKEN=$GITLAB_INFRA_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 6 --auto-approve
 ```
-
-## Packages
-
-* [awscli@latest](https://www.nixhub.io/packages/awscli)
-* [eksctl@latest](https://www.nixhub.io/packages/eksctl)
-* [kustomize@latest](https://www.nixhub.io/packages/kustomize)
-* [kind@latest](https://www.nixhub.io/packages/kind)
-* [vcluster@latest](https://www.nixhub.io/packages/vcluster)
-* [stern@latest](https://www.nixhub.io/packages/stern)
-* [argocd@latest](https://www.nixhub.io/packages/argocd)
-* [aws-iam-authenticator@latest](https://www.nixhub.io/packages/aws-iam-authenticator)
-* [kubernetes@1.26.3](https://www.nixhub.io/packages/kubernetes)
-* [kubernetes-helm-wrapped@latest](https://www.nixhub.io/packages/kubernetes-helm-wrapped)
-* [diskonaut@latest](https://www.nixhub.io/packages/diskonaut)
-* [bat@latest](https://www.nixhub.io/packages/bat)
-* [htop@latest](https://www.nixhub.io/packages/htop)
-* [zoxide@latest](https://www.nixhub.io/packages/zoxide)
-* [fzf-zsh@latest](https://www.nixhub.io/packages/fzf-zsh)
-* [eza@latest](https://www.nixhub.io/packages/eza)
-* [starship@latest](https://www.nixhub.io/packages/starship)
-* [jq@latest](https://www.nixhub.io/packages/jq)
-* [yq-go@latest](https://www.nixhub.io/packages/yq-go)
-* [dive@latest](https://www.nixhub.io/packages/dive)
-* [dos2unix@latest](https://www.nixhub.io/packages/dos2unix)
-* [k9s@latest](https://www.nixhub.io/packages/k9s)
-* [ngrok@latest](https://www.nixhub.io/packages/ngrok)
-* [kubecolor@latest](https://www.nixhub.io/packages/kubecolor)
-* [go@latest](https://www.nixhub.io/packages/go)
-* [fzf@latest](https://www.nixhub.io/packages/fzf)
-* [terraform@latest](https://www.nixhub.io/packages/terraform)
-* [docker@latest](https://www.nixhub.io/packages/docker)
-* [jre@19](https://www.nixhub.io/packages/jre)
