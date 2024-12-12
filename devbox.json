@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.10.5/.schema/devbox.schema.json",
   "packages": [
-    "awscli@latest",
+    "awscli2@latest",
     "eksctl@latest",
     "kustomize@latest",
     "kind@latest",
@@ -9,7 +9,7 @@
     "stern@latest",
     "argocd@latest",
     "aws-iam-authenticator@latest",
-    "kubernetes@1.26.3",
+    "kubernetes@1.28",
     "kubernetes-helm-wrapped@latest",
     "diskonaut@latest",
     "bat@latest",
