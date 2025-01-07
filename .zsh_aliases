@@ -64,17 +64,20 @@ function backup() {
   sudo cp -Lr "${HOME}/.zsh_history" "${HOME}/.zshenv" "${HOME}/.zsh_custom" "${HOME}/.zsh_aliases" \
     "${HOME}/.config/starship.toml" "${HOME}/.gitconfig" \
     "${HOME}/.ssh" "${HOME}/.gpg" "${HOME}/.aws" "${HOME}/.config/google-chrome/Default/Bookmarks" \
-    /etc/cntlm.conf /etc/redsocks.conf /usr/local/sbin/redsocks-iptables \
+    /etc/cntlm.conf /etc/redsocks.conf /usr/local/sbin/redsocks-iptables "$(devbox global path)/devbox.json" \
     /media/sf_sharedfolder
   sudo mkdir -p /media/sf_sharedfolder/.kube
   sudo cp -r "${HOME}/.kube/kubeconfig"* "/media/sf_sharedfolder/.kube"
 
   # copy in my github repo
   sudo cp "${HOME}/.zsh_custom" "${HOME}/.zsh_aliases" \
-    "${HOME}/.config/starship.toml" "${HOME}/dev/devbox-global"
+    "${HOME}/.config/starship.toml" "$(devbox global path)/devbox.json" \
+    "${HOME}/dev/devbox-global"
   pushd "${HOME}/dev/devbox-global" > /dev/null || return
   git add .zsh_custom .zsh_aliases starship.toml > /dev/null
   git commit -m "Update config files" > /dev/null
+  git add devbox.json > /dev/null
+  git commit -m "Update packages list" > /dev/null
   git push
   popd > /dev/null 2>&1 || true
 }
