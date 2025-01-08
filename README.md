@@ -92,9 +92,16 @@ devbox global pull git@github.com:ZeBidule/devbox-global.git
   tar zxvf "${KREW}.tar.gz" &&
   ./"${KREW}" install krew
 )
-kubectl krew install ctx
-kubectl krew install ns
 kubectl krew install view-secret
+
+# Install kubectx and kubens manually because completion does not work if installed with krew
+sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
+sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
+sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
+mkdir -p ~/.oh-my-zsh/custom/completions
+chmod -R 755 ~/.oh-my-zsh/custom/completions
+ln -s /opt/kubectx/completion/_kubectx.zsh ~/.oh-my-zsh/custom/completions/_kubectx.zsh
+ln -s /opt/kubectx/completion/_kubens.zsh ~/.oh-my-zsh/custom/completions/_kubens.zsh
 
 # Install AWS-SSO-cli
 update_aws_sso_cli
