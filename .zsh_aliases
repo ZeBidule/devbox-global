@@ -506,9 +506,8 @@ alias portainer_stop='docker rm -f portainer'
 source <(kubectl completion zsh)
 
 # alias kon='kubeon'
-alias kns='kubectl ns'
-# alias kcx='kcx'
-alias kcx='set_kubeconfigs && kubectl ctx'
+alias kns='kubens'
+alias kcx='set_kubeconfigs && kubectx'
 alias kga='kubectl get all'
 alias kgn='kubectl get nodes'
 alias kgp='kubectl get po'
