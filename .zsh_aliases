@@ -579,6 +579,12 @@ function view_k8s_manifest () {
   code "$temp_file"
 }
 
+function open_cloud_init() {
+  temp_file=$(mktemp --suffix=.log)
+  scp "${1?}:/var/log/cloud-init-output.log" "$temp_file"
+  code "$temp_file"
+}
+
 function get_po_disruption_issue () {
   k get pdb -A -o json | jq -r '.items[] | select(.status.disruptionsAllowed == 0) | "\(.metadata.namespace)/\(.metadata.name)"'
 }
