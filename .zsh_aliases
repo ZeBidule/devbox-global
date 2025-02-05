@@ -94,12 +94,12 @@ function free_space() {
   sudo apt-get -y autoremove --purge
   [[ -d "${HOME}/.cache/cloud-code/installer" ]] && rm -rf "${HOME}/.cache/cloud-code/installer"
   # go clean -cache -modcache -i -r
-  [[ -d "/var/lib/snapd/cache" ]] && rm -rf /var/lib/snapd/cache/*
+  sudo rm -rf /var/lib/snapd/cache/* > /dev/null 2>&1
   sudo journalctl --rotate
   sudo journalctl --vacuum-time=1s > /dev/null 2>&1
   docker system prune -a -f --volumes
   for item in $(find "${HOME}" -name ".terraform" -type d | grep -E "^/home"); do rm -rf "$item"; done
-  # nix-store --gc
+  devbox global run -- nix store gc --extra-experimental-features nix-command
   echo "------------------------------------------------"
   echo "Disk space after cleaning :"
   df -h /dev/sda2
