@@ -9,7 +9,7 @@
     "stern@latest",
     "argocd@latest",
     "aws-iam-authenticator@latest",
-    "kubernetes@1.28",
+    "kubernetes@1.29",
     "kubernetes-helm-wrapped@latest",
     "diskonaut@latest",
     "bat@latest",
