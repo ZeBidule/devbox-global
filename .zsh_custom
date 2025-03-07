@@ -145,7 +145,7 @@ then
   date '+%s' > "$HOME/.last_update"
 fi
 
-if [[ ! -f "$HOME/.last_free_space" || $(cat "$HOME/.last_free_space") -lt $(date -d '1 day ago' '+%s') ]]
+if [[ ! -f "$HOME/.last_free_space" || $(cat "$HOME/.last_free_space") -lt $(date -d '1 week ago' '+%s') ]]
 then
   free_space
   date '+%s' > "$HOME/.last_free_space"
@@ -154,12 +154,6 @@ fi
 if [[ $(systemctl is-active cntlm.service) != "active" || $(systemctl is-active redsocks.service) != "active" ]]
 then
   proxy_start
-fi
-
-if [[ ! -f "$HOME/.last_update_vscode_jenkins_plugin_token" || $(cat "$HOME/.last_update_vscode_jenkins_plugin_token") != $(date '+%d/%m/%Y') ]]
-then
-  update_vscode_jenkins_plugin_token
-  date '+%d/%m/%Y' > "$HOME/.last_update_vscode_jenkins_plugin_token"
 fi
 
 if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1

@@ -60,9 +60,11 @@ contexts = [
   { context_pattern = ".+@k8s-validation.+", context_alias = "k8s-val", style = "bold #FFA500" },
   { context_pattern = ".+@apigw-validation.+", context_alias = "apigw-val", style = "underline bold #FFA500" },
   { context_pattern = ".+@k8s-production-eu-central-1", context_alias = "k8s-prod-EU", style = "bold red" },
+  { context_pattern = ".+@k8s-production-eu-west-1", context_alias = "k8s-prod-EUW", style = "bold red" },
   { context_pattern = ".+@k8s-production-us-east-1", context_alias = "k8s-prod-US", style = "bold red" },
   { context_pattern = ".+@k8s-production-cn-north-1", context_alias = "k8s-prod-CHINA", style = "bold red" },
   { context_pattern = ".+@apigw-production-eu-central-1", context_alias = "apigw-prod-EU", style = "underline bold red" },
+  { context_pattern = ".+@apigw-production-eu-west-1", context_alias = "apigw-prod-EUW", style = "underline bold red" },
   { context_pattern = ".+@apigw-production-us-east-1", context_alias = "apigw-prod-US", style = "underline bold red" },
   { context_pattern = ".+@apigw-production-cn-north-1", context_alias = "apigw-prod-CHINA", style = "underline bold red" },
 ]

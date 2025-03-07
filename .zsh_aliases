@@ -201,11 +201,19 @@ EOF
 function trigger_jenkins_scan() {
   git_root_folder=$1
   [[ $git_root_folder == "" ]] && git_root_folder=$(pwd)
+
   if [[ ! -f "$git_root_folder/.jenkins" ]];
   then
     echo -e "${RED}Error, '.jenkins' config file not found in $git_root_folder"
     return 1
   fi
+
+  if [[ ! -f "$HOME/.last_update_vscode_jenkins_plugin_token" || $(cat "$HOME/.last_update_vscode_jenkins_plugin_token") != $(date '+%d/%m/%Y') ]]
+  then
+    update_vscode_jenkins_plugin_token
+    date '+%d/%m/%Y' > "$HOME/.last_update_vscode_jenkins_plugin_token"
+  fi
+
   url=$(jq -r '.url' "$git_root_folder/.jenkins")
   job_root_url="${url%/job/*/}"
   username=$(jq -r '.username' "$git_root_folder/.jenkins")
@@ -577,6 +585,13 @@ function view_k8s_manifest () {
   temp_file=$(mktemp --suffix=.yaml)
   kubectl get -o yaml "$@" > "$temp_file"
   code "$temp_file"
+}
+
+function disable_kyverno () {
+  kubectl label ns "$1" webhooks.kyverno.io/exclude=''
+}
+function enable_kyverno () {
+  kubectl label ns "$1" webhooks.kyverno.io/exclude-
 }
 
 function open_cloud_init() {
