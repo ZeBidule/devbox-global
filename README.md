@@ -24,6 +24,9 @@ sudo visudo
 # Devbox installtion and configuration prerequisits
 sudo apt install curl bzip2 git -y
 
+# Install pre-requities for virtualbox guest additions (make)
+sudo apt install build-essential linux-headers-$(uname -r)
+
 # => Install virtualbox guest additions using the Ubuntu UI
 
 # Install VScode
