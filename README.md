@@ -21,13 +21,25 @@ In the new VM, mount the shared folder, enable bidirectional clipboard, run the 
 sudo visudo
 # Add NOPASSWD to line "%sudo   ALL=(ALL:ALL) NOPASSWD: ALL"
 
+# Network prerequisits
+sudo apt install cntlm redsocks -y
+sudo cp /media/sf_sharedfolder/cntlm.conf /etc/cntlm.conf
+sudo cp /media/sf_sharedfolder/redsocks.conf /etc/redsocks.conf
+sudo cp /media/sf_sharedfolder/redsocks-iptables /usr/local/sbin/redsocks-iptables
+sudo chmod +x /usr/local/sbin/redsocks-iptables
+sudo mkdir -p /etc/systemd/system/redsocks.service.d
+sudo cp /media/sf_sharedfolder/redsocks.service.d_iptables.conf /etc/systemd/system/redsocks.service.d/iptables.conf
+sudo systemctl daemon-reload
+sudo systemctl restart cntlm.service
+sudo systemctl restart redsocks.service
+
 # Devbox installtion and configuration prerequisits
 sudo apt install curl bzip2 git -y
 
 # Install pre-requities for virtualbox guest additions (make)
 sudo apt install build-essential linux-headers-$(uname -r)
 
-# => Install virtualbox guest additions using the Ubuntu UI
+# => Install virtualbox guest additions using the Ubuntu UI (top of the frame window / devices menu bottom)
 
 # Install VScode
 sudo apt-get install wget gpg
@@ -46,18 +58,6 @@ sudo apt-get install libxss1 libappindicator1 libindicator7
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 sudo apt install ./google-chrome*.deb
 rm -f google-chrome*.deb
-
-# Network prerequisits
-sudo apt install cntlm redsocks -y
-sudo cp /media/sf_sharedfolder/cntlm.conf /etc/cntlm.conf
-sudo cp /media/sf_sharedfolder/redsocks.conf /etc/redsocks.conf
-sudo cp /media/sf_sharedfolder/redsocks-iptables /usr/local/sbin/redsocks-iptables
-sudo chmod +x /usr/local/sbin/redsocks-iptables
-sudo mkdir -p /etc/systemd/system/redsocks.service.d
-sudo cp /media/sf_sharedfolder/redsocks.service.d_iptables.conf /etc/systemd/system/redsocks.service.d/iptables.conf
-sudo systemctl daemon-reload
-sudo systemctl restart cntlm.service
-sudo systemctl restart redsocks.service
 
 # terminal helpers
 sudo apt install zsh -y
