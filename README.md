@@ -8,7 +8,7 @@ In your previous VM, make sure to backup all important files :
 function backup() {
   sudo cp -Lr "${HOME}/.zsh_history" "${HOME}/.zshenv" "${HOME}/.zsh_custom" "${HOME}/.zsh_aliases" "${HOME}/.gitconfig" \
     "${HOME}/.ssh" "${HOME}/.gpg" "${HOME}/.aws" "${HOME}/.config/google-chrome/Default/Bookmarks" \
-    /etc/cntlm.conf /etc/redsocks.conf /usr/local/sbin/redsocks-iptables \
+    /etc/cntlm.conf \
     /media/sf_sharedfolder
   sudo mkdir -p /media/sf_sharedfolder/.kube
   sudo cp -r "${HOME}/.kube/kubeconfig"* "/media/sf_sharedfolder/.kube"
@@ -24,11 +24,12 @@ sudo visudo
 # Network prerequisits
 sudo apt install cntlm redsocks -y
 sudo cp /media/sf_sharedfolder/cntlm.conf /etc/cntlm.conf
+sudo mkdir -p /etc/systemd/system/redsocks.service.d
+# The 3 next files must be downloaded from the "redsocks" directory of this git repository to your Windows shared folder
 sudo cp /media/sf_sharedfolder/redsocks.conf /etc/redsocks.conf
 sudo cp /media/sf_sharedfolder/redsocks-iptables /usr/local/sbin/redsocks-iptables
+sudo cp /media/sf_sharedfolder/iptables.conf /etc/systemd/system/redsocks.service.d/iptables.conf
 sudo chmod +x /usr/local/sbin/redsocks-iptables
-sudo mkdir -p /etc/systemd/system/redsocks.service.d
-sudo cp /media/sf_sharedfolder/redsocks.service.d_iptables.conf /etc/systemd/system/redsocks.service.d/iptables.conf
 sudo systemctl daemon-reload
 sudo systemctl restart cntlm.service
 sudo systemctl restart redsocks.service
