@@ -17,8 +17,6 @@ alias cr='code -r'
 alias dr='devbox run'
 alias tt='devbox run test'
 
-alias get_arti_log='scp repo.tooling.prod.cdsf.io:/data/artifactory/log/artifactory-service.log .'
-
 GOPATH=$(go env GOPATH)
 export PATH="$PATH:$GOPATH/bin"
 
@@ -54,12 +52,6 @@ function update() {
   kubectl krew upgrade
 }
 
-function get_last_addon_template() {
-  cp "${HOME}/dev/oam.k8s.addons.addon-template/."* .
-  cp -r "${HOME}/dev/oam.k8s.addons.addon-template/"* .
-  rm ./oam_k8s_addons_addon-template_export.tar.gz
-}
-
 function backup() {
   sudo cp -Lr "${HOME}/.zsh_history" "${HOME}/.zshenv" "${HOME}/.zsh_custom" "${HOME}/.zsh_aliases" \
     "${HOME}/.config/starship.toml" "${HOME}/.gitconfig" \
@@ -70,11 +62,11 @@ function backup() {
   sudo cp -r "${HOME}/.kube/kubeconfig"* "/media/sf_sharedfolder/.kube"
 
   # copy in my github repo
-  sudo cp "${HOME}/.zsh_custom" "${HOME}/.zsh_aliases" \
+  sudo cp "${HOME}/.zsh_custom" \
     "${HOME}/.config/starship.toml" "$(devbox global path)/devbox.json" \
     "${HOME}/dev/devbox-global"
   pushd "${HOME}/dev/devbox-global" > /dev/null || return
-  git add .zsh_custom .zsh_aliases starship.toml > /dev/null
+  git add .zsh_custom starship.toml > /dev/null
   git commit -m "Update config files" > /dev/null
   git add devbox.json > /dev/null
   git commit -m "Update packages list" > /dev/null
@@ -137,8 +129,8 @@ function configure_vscode_jenkins_plugin() {
   jenkins_organization_name="$(echo "${git_project_name%%/*}" | tr '[:lower:]' '[:upper:]')"
   cat <<EOF >"${git_root_folder}/.jenkins"
 {
-"url": "https://jenkins.tooling.prod.cdsf.io/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}/job/${main_branch_name}/",
-"username": "uia59190",
+"url": "https://xxx/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}/job/${main_branch_name}/",
+"username": "xxx",
 "password": "xxx"
 }
 EOF
@@ -167,7 +159,7 @@ function update_vscode_jenkins_plugin_token() {
   then
     # shellcheck disable=SC1091
     source "$HOME/.ssh/jenkins.sh"
-    result=$("${HOME}/dev/oam.ci.jenkins-automation/create-personal-token.sh" -q --hostname "jenkins.tooling.prod.cdsf.io" --username "${JENKINS_GTP_SA_USER}" -n "VSCode_plugin")
+    result=$("${HOME}/dev/oam.ci.jenkins-automation/create-personal-token.sh" -q --hostname "xxx" --username "${JENKINS_GTP_SA_USER}" -n "VSCode_plugin")
   fi
   new_token=$(echo "$result" | tr -d '\n')
   if ! [[ $new_token =~ ^[0-9a-z]+$ ]] 
@@ -192,7 +184,7 @@ function update_vscode_jenkins_plugin_token() {
 }
 
 function allow_jenkins_slave_ssh() {
-  ssh admin@jenkins.tooling.prod.cdsf.io << EOF
+  ssh admin@xxx << EOF
 sudo sed -i 's/^AllowTcpForwarding.*/AllowTcpForwarding yes/' /etc/ssh/sshd_config
 sudo systemctl restart sshd
 EOF
@@ -261,14 +253,6 @@ function delete_git_branch() {
     git push --delete origin $1
   fi
   deleteOldBranches
-}
-
-function archive_old_git_branches() {
-  GITLAB_HOSTNAME=git.int.be.continental.cloud PRIVATE_TOKEN=$GITLAB_DEV_PRIVATE_TOKEN "$HOME/dev/oam.ci.gitlab-automation/archive_old_git_branches.sh" -g 2 --auto-approve
-  GITLAB_HOSTNAME=code.tooling.prod.cdsf.io PRIVATE_TOKEN=$GITLAB_GTP_PRIVATE_TOKEN "$HOME/dev/oam.ci.gitlab-automation/archive_old_git_branches.sh" -g 114 --auto-approve
-  GITLAB_HOSTNAME=code.tooling.prod.cdsf.io PRIVATE_TOKEN=$GITLAB_GTP_PRIVATE_TOKEN "$HOME/dev/oam.ci.gitlab-automation/archive_old_git_branches.sh" -g 5 --auto-approve
-  # GITLAB_HOSTNAME=infra.int.be.continental.cloud PRIVATE_TOKEN=$GITLAB_INFRA_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/archive_old_git_branches.sh -g 25 --auto-approve
-  # GITLAB_HOSTNAME=infra.int.be.continental.cloud PRIVATE_TOKEN=$GITLAB_INFRA_PRIVATE_TOKEN $HOME/dev/oam.ci.gitlab-automation/archive_old_git_branches.sh -g 6 --auto-approve
 }
 
 function close_git_branch() {
@@ -501,8 +485,6 @@ alias dos='docker_sh'
 alias doi='docker images'
 alias doe='docker_enter'
 
-alias push_to_all_ecr='$HOME/dev/oam.builds.jenkins.shared-lib.common/resources/gtp/push_to_ecr.sh -e all -i '
-
 # Portainer
 alias portainer='docker run -d -p 9001:9000 --name portainer -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer'
 alias portainer_stop='docker rm -f portainer'
@@ -537,49 +519,6 @@ alias kgi='kubectl get pods -o jsonpath="{..image}" | tr -s "[[:space:]]" "\n" |
 alias kgia='kubectl get pods -A -o jsonpath="{..image}" | tr -s "[[:space:]]" "\n" | sort | uniq -c'
 alias kgda="get_po_disruption_issue"
 
-alias argocdpf='argocd --plaintext --grpc-web --insecure --port-forward --port-forward-namespace argocd'
-
-alias kindkc='export KUBECONFIG="$HOME/.kind/config" && kind get kubeconfig > "$HOME/.kind/config"'
-# Clusters manager EKS
-alias kcm='kcx tls2_CDSF_Services_Framework_Admin_cicd@clusters-manager-PROD'
-alias kcmd='${HOME}/dev/oam.ci.cluster-api-manager/scripts/get_clusters-manager_kubeconfig.sh -c DEV && kcx tls2_CDSF_Services_Framework_Admin_cicd@clusters-manager-DEV'
-alias kcmt='${HOME}/dev/oam.ci.cluster-api-manager/scripts/get_clusters-manager_kubeconfig.sh -c TEST && kcx tls2_CDSF_Services_Framework_Admin_cicd@clusters-manager-TEST'
-# Harbor EKS
-alias kch='kcx tls2_CDSF_Services_Framework_Admin_cicd@prod-registry-cluster && kns harbor'
-alias kchd='get_harbor_eks_kubeconfig.sh -c dev && kcx tls2_CDSF_Services_Framework_Admin_cicd@dev-registry-cluster'
-alias kcht='get_harbor_eks_kubeconfig.sh -c test && kcx tls2_CDSF_Services_Framework_Admin_cicd@test-registry-cluster'
-# Applicative K8S PROD
-alias kci='kcx tls2_CDSF_Services_Framework_Admin_k8s_int@k8s-integration-eu-central-1'
-alias kcv='kcx tls2_CDSF_Services_Framework_Admin_k8s_val@k8s-validation-eu-central-1'
-alias kcp='kcx tls2_CDSF_Services_Framework_Admin_k8s_prod_eu@k8s-production-eu-central-1'
-alias kcw='kcx tls2_CDSF_Services_Framework_Admin_k8s_prod_euw@k8s-production-eu-west-1'
-alias kcu='kcx tls2_CDSF_Services_Framework_Admin_k8s_prod_us@k8s-production-us-east-1'
-alias kcc='kcx CDSF_Services_Framework_Admin_k8s_prod_cn@k8s-production-cn-north-1'
-# Applicative K8S TEST & DEV
-alias kcid='get_applicative_k8s_kubeconfig.sh -c dev -e int && kcx tls2_CDSF_Services_Framework_Admin_k8s_int_dev@k8s-integration-dev-eu-central-1'
-alias kcit='get_applicative_k8s_kubeconfig.sh -c test -e int && kcx tls2_CDSF_Services_Framework_Admin_k8s_int_test@k8s-integration-test-eu-central-1'
-alias kcvd='get_applicative_k8s_kubeconfig.sh -c dev -e val && kcx tls2_CDSF_Services_Framework_Admin_k8s_val_dev@k8s-validation-dev-eu-central-1'
-alias kcvt='get_applicative_k8s_kubeconfig.sh -c test -e val && kcx tls2_CDSF_Services_Framework_Admin_k8s_val_test@k8s-validation-test-eu-central-1'
-# API gateway EKS K8S PROD
-alias kcai='kcx tls2_CDSF_Services_Framework_Admin_apigtw_int@apigw-integration-eu-central-1'
-alias kcav='kcx tls2_CDSF_Services_Framework_Admin_apigtw_val@apigw-validation-eu-central-1'
-alias kcap='kcx tls2_CDSF_Services_Framework_Admin_apigtw_prod_eu@apigw-production-eu-central-1'
-alias kcaw='kcx tls2_CDSF_Services_Framework_Admin_apigtw_prod_euw@apigw-production-eu-west-1'
-alias kcau='kcx tls2_CDSF_Services_Framework_Admin_apigtw_prod_us@apigw-production-us-east-1'
-alias kcac='kcx CDSF_Services_Framework_Admin_apigtw_prod_cn@apigw-production-cn-north-1'
-# API gateway EKS TEST & DEV
-alias kcaid='get_apigw_kubeconfig.sh -c dev -e int && kcx tls2_CDSF_Services_Framework_Admin_apigtw_int_dev@apigw-integration-DEV-eu-central-1'
-alias kcait='get_apigw_kubeconfig.sh -c test -e int && kcx tls2_CDSF_Services_Framework_Admin_apigtw_int_test@apigw-integration-TEST-eu-central-1'
-alias kcavd='get_apigw_kubeconfig.sh -c dev -e val && kcx tls2_CDSF_Services_Framework_Admin_apigtw_val_dev@apigw-validation-DEV-eu-central-1'
-alias kcavt='get_apigw_kubeconfig.sh -c test -e val && kcx tls2_CDSF_Services_Framework_Admin_apigtw_val_test@apigw-validation-TEST-eu-central-1'
-# GKE
-alias kcg='kcx gke_gcp1002d-i3x5x6ms_europe-west9_cops-autopilot-cluster-1'
-alias kcgm='kcx gke_gcp1002d-i3x5x6ms_europe-west3_cops-management-autopilot-cluster'
-
-alias open_clusters_manager_argocd='/home/antoine/dev/oam.ci.clusters-manager/scripts/open_argocd_ui.sh -c prod'
-
-alias get_virtualgtp_kubeconfig='/home/antoine/dev/oam.k8s.addons.virtualgtp/get_kubeconfig.sh'
-
 alias kv='view_k8s_manifest'
 function view_k8s_manifest () {
   temp_file=$(mktemp --suffix=.yaml)
@@ -602,12 +541,6 @@ function open_cloud_init() {
 
 function get_po_disruption_issue () {
   k get pdb -A -o json | jq -r '.items[] | select(.status.disruptionsAllowed == 0) | "\(.metadata.namespace)/\(.metadata.name)"'
-}
-
-function open_kubeflow_argocd() {
-  kubectl --namespace argocd \
-          --kubeconfig "${HOME}/.kube/kubeconfig_eks_kubeflow_integration_eu-central-1_Framework-admin.conf" \
-          port-forward svc/argocd-server 9020:80 &>/dev/null &
 }
 
 function k_get_all() {
@@ -638,42 +571,6 @@ function argocd_sync_app() {
   argocd login cd.argoproj.io --core
   argocd app terminate-op "$app"
   argocd app sync "$app"
-}
-
-function open_argocd() {
-  env=${1:-integration}
-  region=${2:-eu-central-1}
-  cluster=${3:-applicative_k8s}
-
-  case "$env" in
-    integration)
-      local_port=9001
-      ;;
-    validation)
-      local_port=9002
-      ;;
-    production)
-      case "$region" in
-        eu-central-1)
-          local_port=9003
-          ;;
-        us-east-1)
-          local_port=9004
-          ;;
-      esac
-      ;;
-  esac
-
-  echo "=> Launch ${env} ${region} argocd-server port-forward"
-  kubectl --namespace argocd \
-          port-forward svc/argocd-server $local_port:80 &>/dev/null &
-          # --kubeconfig "${HOME}/.kube/kubeconfig_${cluster}_${env}_${region}-admin.conf" \
-  echo "=> Wait for port-forward setup..."
-  sleep 10
-  echo "=> Open argo UI"
-  google-chrome "http://localhost:$local_port/applications" &>/dev/null &
-  echo "=> Current port-forward process"
-  ps -ef | grep 'port-forward svc/argocd-server' | grep -v 'grep'
 }
 
 function enable_argocd() {
@@ -720,41 +617,6 @@ EOF
   kubectl get pods -o custom-columns-file="${HOME}/.kube/k8s-images.fmt" "$@"
 }
 
-function apigw_dev() {
-  configureAwsProfiles.sh --project-name infra --region eu-central-1 --environment integration --test none
-  eksctl --profile target utils write-kubeconfig --cluster apigw-integration-DEV --region eu-central-1 --kubeconfig "${HOME}/.kube/dev/kubeconfig_apigw.conf"
-  export KUBECONFIG=$HOME/.kube/dev/kubeconfig_apigw.conf
-  AWS_DEFAULT_REGION=eu-central-1 AWS_PROFILE=target k cluster-info
-}
-
-function apigw_test() {
-  configureAwsProfiles.sh --project-name infra --region eu-central-1 --environment integration --test none
-  eksctl --profile target utils write-kubeconfig --cluster apigw-integration-TEST --region eu-central-1 --kubeconfig "${HOME}/.kube/test/kubeconfig_apigw.conf"
-  export KUBECONFIG=$HOME/.kube/test/kubeconfig_apigw.conf
-  AWS_DEFAULT_REGION=eu-central-1 AWS_PROFILE=target k cluster-info
-}
-
-function configure_env_from_current_apigw {
-  REGION=$(kubectl get nodes -l alpha.eksctl.io/cluster-name -o jsonpath='{.items[0].metadata.labels.region}')
-  export REGION
-  ENVIRONMENT=$(kubectl get nodes -l alpha.eksctl.io/cluster-name -o jsonpath='{.items[0].metadata.labels.environment}')
-  export ENVIRONMENT
-  CLASSIFICATION=$(kubectl get nodes -l alpha.eksctl.io/cluster-name -o jsonpath='{.items[0].metadata.labels.classification}')
-  export CLASSIFICATION
-  export CLUSTER='api-gateway'
-}
-
-function configure_env_from_current_applicative_k8s {
-  REGION=$(kubectl get nodes -l node-role.kubernetes.io/control-plane= -o jsonpath='{.items[0].metadata.annotations.region}')
-  export REGION
-  ENVIRONMENT=$(kubectl get nodes -l node-role.kubernetes.io/control-plane= -o jsonpath='{.items[0].metadata.annotations.role}' | tr '[:upper:]' '[:lower:]')
-  export ENVIRONMENT
-  CLASSIFICATION=$(kubectl get nodes -l node-role.kubernetes.io/control-plane= -o jsonpath='{.items[0].metadata.annotations.classification}' | tr '[:upper:]' '[:lower:]')
-  export CLASSIFICATION
-  export CLUSTER='applicative-k8s'
-}
-
-alias connect_applicative_k8s_node='/home/antoine/dev/oam.k8s.infra/k8s-scripts/send-ssh-public-key'
 function kssh {
   # shellcheck disable=SC2001
   ip=$(echo "$1" | sed 's/ip-\([0-9]\{1,3\}-[0-9]\{1,3\}-[0-9]\{1,3\}-[0-9]\{1,3\}\).*/\1/')
@@ -877,105 +739,13 @@ function check_aws_connection() {
   fi
 }
 
-alias sfa='sso_login sfa 703253491819 1114-CDSF-sfa'
-alias 1513='sso_login 1513 1513 1513-DevOps'
-function sso_login() {
-  unset AWS_PROFILE
-
-  # We set tenant to avoid infinite loop issue
-  # https://github.geo.conti.de/continental-cloud/aws-sso-cli/issues/20 is not fixed
-  export SSO_TENANT="continental-ag-secure-cloud-access"
-
-  # echo "\033[0;31m/!\\/!\\/!\\/!\\/!\\/!\\/!\\"
-  # echo "\033[0;31m/!\\/!\\/!\\/!\\/!\\/!\\/!\\"
-  # echo "\033[0;31m/!\\ DO NOT USE THE BROWSER OF YOU VM FOR AUTHENTICATION. USE THE ONE OF YOUR HOST"
-  # echo "Usage: adl [profile] [region]"
-  # echo "parameters are optional"
-  # echo "\033[0;31m/!\\/!\\/!\\/!\\/!\\/!\\/!\\"
-  # echo "\033[0;31m/!\\/!\\/!\\/!\\/!\\/!\\/!\\"
-  aws-sso-cli configure browser none
-  if [[ "$1" == "" ]];
-  then
-      aws-sso-cli login --tenant "$SSO_TENANT"
-      # echo "Set AWS_PROFILE !"
-  elif [[ $2 == "" && $3 == "" ]]
-  then
-      aws-sso-cli login --profile "$1" --tenant "$SSO_TENANT"
-      # export AWS_PROFILE=$1
-  else
-      aws-sso-cli login --profile "$1" --account "$2" --role "$3" --tenant "$SSO_TENANT"
-      # export AWS_PROFILE=$1
-  fi
-
-  check_aws_connection "$1" || echo "Bad credentials or clock drift, use 'clock_sync' to reset the clock"
-}
-
-function update_aws_sso_cli() {
-  sudo -E curl -sL https://github.geo.conti.de/api/v3/repos/continental-cloud/aws-sso-cli/releases/latest \
-  | grep browser_download_url \
-  | grep linux \
-  | cut -d '"' -f 4 \
-  | xargs -n1 sudo curl -sL -o /usr/local/bin/aws-sso-cli \
-  && sudo chmod 755 /usr/local/bin/aws-sso-cli \
-  && sudo chown $UID /usr/local/bin/aws-sso-cli
-  aws-sso-cli --version
-}
-
 function aws_decode-authorization-message() {
   aws sts decode-authorization-message --encoded-message $1 --query 'DecodedMessage' --output text | jq
-}
-
-function get_PrivateIpAddresses() {
-  aws_profile_name='int'
-  if [[ "$1" != "" ]];
-  then
-    aws_profile_name="$1"
-  fi
-  classification='PROD'
-  if [[ "$2" != "" ]];
-  then
-    classification="$2"
-  fi
-  echo "---------------------------------------------------------"
-  aws_account_id=$(aws --profile ${aws_profile_name} sts get-caller-identity --query "Account" --output text)
-  echo "AWS account ID : ${aws_account_id}"
-  case "$aws_account_id" in
-      082461646758)
-          aws_account_name="integration"
-          ;;
-      818436620314)
-          aws_account_name="validation"
-          ;;
-      288932515620)
-          aws_account_name="production"
-          ;;
-      517211653115)
-          aws_account_name="log_management"
-          ;;
-      821840332237)
-          aws_account_name="china"
-          ;;
-      *)
-      echo "Unknown AWS account ID: ${aws_account_id}" >&2
-  esac
-  echo "AWS account : ${aws_account_name}"
-  echo "AWS region : $(aws --profile ${aws_profile_name} configure get region)"
-  echo "Classification : ${classification}"
-  echo "---------------------------------------------------------"
-  aws --profile ${aws_profile_name} ec2 describe-instances --filters Name=tag:Classification,Values=${classification} --query "Reservations[].Instances[].[Tags[?Key=='Application'].Value[] | [0], Tags[?Key=='Usage'].Value[] | [0], Tags[?Key=='Environment'].Value[] | [0], PrivateIpAddress, LaunchTime, Tags[?Key=='Deploy_User'].Value[] | [0]]" --output text | sort
-}
-
-function delete_test_dev_amis() {
-  AWS_DEFAULT_REGION=eu-central-1 ${HOME}/dev/infra.builds.docker.aws-manager/launch.sh delete_old_ami_and_snapshots.sh --filters Name=tag:Classification,Values=TEST --keep-last 0
-  AWS_DEFAULT_REGION=eu-central-1 ${HOME}/dev/infra.builds.docker.aws-manager/launch.sh delete_old_ami_and_snapshots.sh --filters Name=tag:Classification,Values=DEV --keep-last 0
 }
 
 #################################
 # GCP
 #################################
-alias gcl='gcloud auth login --no-launch-browser && gcloud config set project gcp1002d-i3x5x6ms'
-alias get_cops_management_kubeconfig='get_gke_kubeconfig cops-management-autopilot-cluster'
-alias get_cops_kubeconfig='get_gke_kubeconfig cops-autopilot-cluster-1'
 
 function get_gke_kubeconfig {
   CLUSTER_NAME=$1
