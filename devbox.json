@@ -9,7 +9,6 @@
     "stern@latest",
     "argocd@latest",
     "aws-iam-authenticator@latest",
-    "kubernetes@1.29",
     "kubernetes-helm-wrapped@latest",
     "diskonaut@latest",
     "bat@latest",
@@ -36,7 +35,8 @@
     "packer@latest",
     "unzip@latest",
     "fontconfig@latest",
-    "wget@latest"
+    "wget@latest",
+    "kubernetes@1.29"
   ],
   "env": {
     "DEVBOX_GLOBAL_PREFIX": "$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default",
