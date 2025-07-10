@@ -139,21 +139,27 @@ eval "$(starship init zsh)"
 # Commands to launch at each terminal start
 # ############################################
 
+if [[ $(systemctl is-active cntlm.service) != "active" || $(systemctl is-active redsocks.service) != "active" ]]
+then
+  proxy_start
+fi
+
 if [[ ! -f "$HOME/.last_update" || $(cat "$HOME/.last_update") -lt $(date -d '1 week ago' '+%s') ]]
 then
-  update
   date '+%s' > "$HOME/.last_update"
+  update
 fi
 
 if [[ ! -f "$HOME/.last_free_space" || $(cat "$HOME/.last_free_space") -lt $(date -d '1 week ago' '+%s') ]]
 then
-  free_space
   date '+%s' > "$HOME/.last_free_space"
+  free_space
 fi
 
-if [[ $(systemctl is-active cntlm.service) != "active" || $(systemctl is-active redsocks.service) != "active" ]]
+if [[ ! -f "$HOME/.last_deleteOldBranches" || $(cat "$HOME/.last_deleteOldBranches") -lt $(date -d '4 week ago' '+%s') ]]
 then
-  proxy_start
+  date '+%s' > "$HOME/.last_deleteOldBranches"
+  SILENT=1 deleteOldBranchesInEachRepo
 fi
 
 if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
