@@ -54,6 +54,10 @@ if [[ $(systemctl is-active cntlm.service) != "active" || $(systemctl is-active 
 then
   proxy_start
 fi
+# if [[ $(systemctl is-active cntlm.service) == "active" || $(systemctl is-active redsocks.service) == "active" ]]
+# then
+#   proxy_stop
+# fi
 
 if [[ ! -f "$HOME/.last_update" || $(cat "$HOME/.last_update") -lt $(date -d '1 week ago' '+%s') ]]
 then

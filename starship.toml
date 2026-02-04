@@ -87,3 +87,7 @@ contexts = [
 disabled = true
 impure_msg = 'devbox'
 format = 'via [$symbol$state](bold blue) '
+
+# https://starship.rs/config/#python
+[python]
+disabled = true
