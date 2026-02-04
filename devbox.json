@@ -29,15 +29,16 @@
     "docker@latest",
     "jre@19",
     "ansible@latest",
-    "istioctl@latest",
+    "istioctl@1.26",
     "jnv@latest",
     "packer@latest",
     "unzip@latest",
     "fontconfig@latest",
     "wget@latest",
-    "kubernetes@1.30",
+    "kubernetes@1.31",
     "devbox@latest",
-    "kustomize@latest"
+    "kustomize@latest",
+    "gum@latest"
   ],
   "env": {
     "DEVBOX_GLOBAL_PREFIX": "$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default",
