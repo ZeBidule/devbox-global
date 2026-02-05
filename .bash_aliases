@@ -2,14 +2,12 @@
 
 # Personnal aliases
 alias edssh='code ${HOME}/.ssh/config'
-alias rea='. ${HOME}/.zsh_aliases && . ${HOME}/.zshenv'
-alias eda='code ${HOME}/.zsh_aliases'
-alias ede='code ${HOME}/.zshenv'
-alias edc='code ${HOME}/.zsh_custom'
+alias rea='. ${HOME}/.bash_aliases && . ${HOME}/.bash_env'
+alias eda='code ${HOME}/.bash_aliases'
+alias ede='code ${HOME}/.bash_env'
+alias edc='code ${HOME}/.bash_custom'
 alias eds='code ${HOME}/.config/starship.toml'
 alias edd='code $(devbox global path)/devbox.json'
-
-alias connect='proxy_start && update_vscode_jenkins_plugin_token && sfa'
 
 alias c='code'
 alias cr='code -r'
@@ -50,23 +48,24 @@ function update() {
   refresh-global
   update_aws_sso_cli
   kubectl krew upgrade
+  ok
 }
 
 function backup() {
-  sudo cp -Lr "${HOME}/.zsh_history" "${HOME}/.zshenv" "${HOME}/.zsh_custom" "${HOME}/.zsh_aliases" \
+  sudo cp -Lr "${HOME}/.bash_history" "${HOME}/.bash_env" "${HOME}/.bash_custom" "${HOME}/.bash_aliases" \
     "${HOME}/.config/starship.toml" "${HOME}/.gitconfig" \
-    "${HOME}/.ssh" "${HOME}/.gpg" "${HOME}/.aws" "${HOME}/.config/google-chrome/Default/Bookmarks" \
-    /etc/cntlm.conf /etc/redsocks.conf /usr/local/sbin/redsocks-iptables "$(devbox global path)/devbox.json" \
-    /media/sf_sharedfolder
-  sudo mkdir -p /media/sf_sharedfolder/.kube
-  sudo cp -r "${HOME}/.kube/kubeconfig"* "/media/sf_sharedfolder/.kube"
+    "${HOME}/.ssh" "${HOME}/.gpg" "${HOME}/.aws" \
+    /etc/cntlm.conf "$(devbox global path)/devbox.json" \
+    /mnt/d/sharedfolder
+  sudo mkdir -p /mnt/d/sharedfolder/.kube
+  sudo cp -r "${HOME}/.kube/kubeconfig"* "/mnt/d/sharedfolder/.kube"
 
   # copy in my github repo
-  sudo cp "${HOME}/.zsh_custom" \
+  sudo cp "${HOME}/.bash_custom" \
     "${HOME}/.config/starship.toml" "$(devbox global path)/devbox.json" \
-    "${HOME}/dev/devbox-global"
-  pushd "${HOME}/dev/devbox-global" > /dev/null || return
-  git add .zsh_custom starship.toml > /dev/null
+    "${HOME}/dev/ZeBidule.devbox-global"
+  pushd "${HOME}/dev/ZeBidule.devbox-global" > /dev/null || return
+  git add .bash_custom starship.toml > /dev/null
   git commit -m "Update config files" > /dev/null
   git add devbox.json > /dev/null
   git commit -m "Update packages list" > /dev/null
@@ -75,12 +74,10 @@ function backup() {
 }
 
 function free_space() {
-  echo "------------------------------------------------"
-  echo "Free space"
-  echo "------------------------------------------------"
-  echo "Disk space before cleaning :"
+  title0 "Free space"
+  echo -e "${GRAY}Disk space before cleaning :"
   df -h /dev/sda2
-  echo "------------------------------------------------"
+  echo "------------------------------------------------${DEFAULT}"
   sudo apt-get -y clean
   sudo apt -y autoclean
   sudo apt-get -y autoremove --purge
@@ -92,34 +89,104 @@ function free_space() {
   docker system prune -a -f --volumes
   for item in $(find "${HOME}" -name ".terraform" -type d | grep -E "^/home"); do rm -rf "$item"; done
   devbox global run -- nix store gc --extra-experimental-features nix-command
-  echo "------------------------------------------------"
+  echo "${GRAY}------------------------------------------------"
   echo "Disk space after cleaning :"
   df -h /dev/sda2
-  echo "------------------------------------------------"
+  echo "------------------------------------------------${DEFAULT}"
+}
+
+function github_api_rate_limit {
+  echo -n "${GRAY}GitHub API remaining calls : ${DEFAULT}"
+  curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit | jq '.rate.remaining'
+  echo -n "${GRAY}GitHub API reset time : ${DEFAULT}"
+  curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit | jq -r '.rate.reset' | xargs -I{} date -d @{}
+}
+
+########################################
+#                Formatting
+########################################
+
+export DEFAULT="\e[39m"
+export RED="\e[31m"
+export GREEN="\e[32m"
+export BLUE="\e[34m"
+export MAGENTA="\e[35m"
+export YELLOW="\e[33m"
+export CYAN="\e[36m"
+export GRAY="\e[90m"
+
+function title0 {
+  [[ ($OUTPUT == "light" || $OUTPUT == "none") && ! $DEBUG ]] && return
+  echo
+  echo -e "${MAGENTA}===================================================================${DEFAULT}"
+  echo -e "${MAGENTA}${1}${DEFAULT}"
+  echo -e "${MAGENTA}===================================================================${DEFAULT}"
+}
+
+function title1 {
+  [[ ($OUTPUT == "light" || $OUTPUT == "none") && ! $DEBUG ]] && return
+  echo
+  echo -e "${BLUE}===================================================================${DEFAULT}"
+  echo -e "${BLUE}${1^}${DEFAULT}"
+  echo -e "${BLUE}===================================================================${DEFAULT}"
+}
+
+function title_sep {
+  [[ ($OUTPUT == "light" || $OUTPUT == "none") && ! $DEBUG ]] && return
+  echo -e "${BLUE}---------------- ${1^} ----------------"
+}
+
+function title2 {
+  [[ ($OUTPUT == "light" || $OUTPUT == "none") && ! $DEBUG ]] && return
+  echo
+  echo -e "${CYAN}=> ${1^}...${DEFAULT}"
+}
+
+# shellcheck disable=SC2120
+function ok {
+  [[ $OUTPUT == "none" && ! $DEBUG ]] && return
+  if [[ -n "$1" ]]
+  then
+    echo -e "${GREEN}OK${DEFAULT} (${1})"
+  else
+    echo -e "${GREEN}OK${DEFAULT}"
+  fi
+}
+
+function error {
+  [[ $OUTPUT == "none" && ! $DEBUG ]] && return
+  echo -e "${RED}[ERROR] ${error_message_prefix:-}${1^} !${DEFAULT}"
+  errors+=( "${1^}" )
+}
+
+function warn {
+  [[ $OUTPUT == "none" && ! $DEBUG ]] && return
+  echo -e "${YELLOW}[WARN] ${1^}${DEFAULT}"
+}
+
+function info {
+  [[ $OUTPUT == "none" && ! $DEBUG ]] && return
+  echo -e "${GRAY}[INFO] ${1^}${DEFAULT}"
+}
+
+function debug {
+  if [[ $DEBUG ]]
+  then
+    echo -e "${GRAY}[DEBUG] ${1}${DEFAULT}"
+  fi
 }
 
 ########################################
 #                Jenkins
 ########################################
-alias ut='update_vscode_jenkins_plugin_token'
-function configure_vscode_jenkins_plugin_in_all_repos() {
-  for git_folder in "${HOME}/dev/"*/.git
-  do
-    [[ -d "$git_folder" ]] || return
+function get_jenkins_job_url() {
+  git_root_folder=${1:-$(pwd)}
 
-    configure_vscode_jenkins_plugin "${git_folder%/.git}" false
-  done
-}
-function configure_vscode_jenkins_plugin() {
-  git_root_folder=$1
-  [[ $git_root_folder == "" ]] && git_root_folder=$(pwd)
-  # skip repos without Jenkinsfile
-  [[ -f "${git_root_folder}/Jenkinsfile" ]] || return
-  echo "=> Configure VScode jenkins plugin for ${git_root_folder##*/}"
   pushd "${git_root_folder}" > /dev/null || return
   git_url=$(git remote get-url origin)
   main_branch_name=$(get_main_branch_name)
   popd > /dev/null 2>&1 || true
+
   git_project_name=$(echo "$git_url" | perl -lne 'print $1 if /git@.+:(.+)\.git/')
   if [[ $git_project_name == "" ]]
   then
@@ -127,112 +194,49 @@ function configure_vscode_jenkins_plugin() {
     return 1
   fi
   jenkins_organization_name="$(echo "${git_project_name%%/*}" | tr '[:lower:]' '[:upper:]')"
-  cat <<EOF >"${git_root_folder}/.jenkins"
-{
-"url": "https://xxx/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}/job/${main_branch_name}/",
-"username": "xxx",
-"password": "xxx"
-}
-EOF
-  echo "OK"
-
-  if ! grep '.jenkins' "${git_root_folder}/.gitignore" > /dev/null
-  then
-    echo "Configure gitignore"
-    cat <<EOF >>"${git_root_folder}/.gitignore"
-
-# Jenkins status VScode plugin configuration file, don't commit it because it contains your Jenkins personal token !
-.jenkins
-
-EOF
-    pushd "${git_root_folder}" > /dev/null || return
-    git add .gitignore > /dev/null
-    git commit -m "Ignore VScode jenkins plugin config file" > /dev/null
-    popd > /dev/null 2>&1 || true
-  fi
-  [[ $2 != "false" ]] && update_vscode_jenkins_plugin_token ""
-}
-
-function update_vscode_jenkins_plugin_token() {
-  new_token=$1
-  if [[ -z $new_token ]]
-  then
-    # shellcheck disable=SC1091
-    source "$HOME/.ssh/jenkins.sh"
-    result=$("${HOME}/dev/oam.ci.jenkins-automation/create-personal-token.sh" -q --hostname "xxx" --username "${JENKINS_GTP_SA_USER}" -n "VSCode_plugin")
-  fi
-  new_token=$(echo "$result" | tr -d '\n')
-  if ! [[ $new_token =~ ^[0-9a-z]+$ ]] 
-  then
-    echo "[ERROR] $result"
-  else
-    export JENKINS_GTP_TOKEN="$new_token"
-    nb=0
-    for git_folder in "${HOME}/dev/"*/.git
-    do
-      [[ -d "$git_folder" ]] || continue
-
-      git_root_folder="${git_folder%/.git}"
-      if [[ -f "${git_root_folder}/.jenkins" ]]
-      then
-        sed -i "s/\"password\": \".*\"/\"password\": \"${new_token}\"/" "${git_root_folder}/.jenkins"
-        nb=$((nb+1))
-      fi
-    done
-    echo "$nb tokens updated under \"${HOME}/dev\""
-  fi
+  echo -n "https://${JENKINS_GTP_HOSTNAME}/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}/job/${main_branch_name}"
 }
 
 function allow_jenkins_slave_ssh() {
-  ssh admin@xxx << EOF
+  ssh "admin@${JENKINS_GTP_HOSTNAME}" << EOF
 sudo sed -i 's/^AllowTcpForwarding.*/AllowTcpForwarding yes/' /etc/ssh/sshd_config
 sudo systemctl restart sshd
 EOF
 }
 
-function trigger_jenkins_scan() {
-  git_root_folder=$1
-  [[ $git_root_folder == "" ]] && git_root_folder=$(pwd)
-
-  if [[ ! -f "$git_root_folder/.jenkins" ]];
-  then
-    echo -e "${RED}Error, '.jenkins' config file not found in $git_root_folder"
-    return 1
-  fi
-
-  if [[ ! -f "$HOME/.last_update_vscode_jenkins_plugin_token" || $(cat "$HOME/.last_update_vscode_jenkins_plugin_token") != $(date '+%d/%m/%Y') ]]
-  then
-    update_vscode_jenkins_plugin_token
-    date '+%d/%m/%Y' > "$HOME/.last_update_vscode_jenkins_plugin_token"
-  fi
-
-  url=$(jq -r '.url' "$git_root_folder/.jenkins")
-  job_root_url="${url%/job/*/}"
-  username=$(jq -r '.username' "$git_root_folder/.jenkins")
-  password=$(jq -r '.password' "$git_root_folder/.jenkins")
-  curl -u "$username:$password" -X POST "$job_root_url/build"
+alias tj='trigger_jenkins_scan'
+function trigger_jenkins() {
+  trigger_jenkins_job "$1" || trigger_jenkins_scan "$1"
 }
 
-function fix_jenkins_vscode_plugin() {
-  for file in "${HOME}/.vscode/extensions/alefragnani.jenkins-status-"*"/dist/extension.js"
-  do
-    if [[ ! -f "${file}.backup" ]]
-    then
-      cp "$file" "${file}.backup"
-    fi
-    echo '==> Remove 3 occurrence of "o.Uri.parse(" in the file (don'\''t forget to remove also the corresponding closing bracket)'
-    echo '==> Replace .openInJenkinsConsoleOutput",(()=>{c.getStatus(p,u,l).then((e=>{e.connectionStatus===o.ConnectionStatus.Connected?r.env.openExternal(this.settingNameToUrl[s.name]+e.buildNr.toString()+"/console'
-    echo 'by .openInJenkinsConsoleOutput",(()=>{c.getStatus(p,u,l).then((e=>{e.connectionStatus===o.ConnectionStatus.Connected?r.env.openExternal(this.settingNameToUrl[s.name].replaceAll('\''%2F'\'','\''%252F'\'').replace(/\/job\/([^\/]+)\/job\/([^\/]+)\/job\//, '\''/blue/organizations/jenkins/$1%2F$2/detail/'\'')+e.buildNr.toString()'
-    echo '==> Replace this.statusBarItems[s.name].name=t,this.statusBarItems[s.name].command="Jenkins."+s.name+".openInJenkins"'
-    echo 'by this.statusBarItems[s.name].name=t,this.statusBarItems[s.name].command="Jenkins."+s.name+".openInJenkinsConsoleOutput"'
-    echo 'close the file and restart VS Code'
-    code "$file"
-  done
+function trigger_jenkins_scan() {
+  username=$JENKINS_GTP_USER
+  password=$JENKINS_GTP_API_TOKEN
+  job_root_url=$(get_jenkins_job_url)
+  echo curl -u "$username:$password" -X POST "$job_root_url/build"
+}
+
+function trigger_jenkins_job() {
+  username=$JENKINS_GTP_USER
+  password=$JENKINS_GTP_API_TOKEN
+  job_root_url=$(get_jenkins_job_url)
+
+  JENKINS_HOSTNAME=${JENKINS_GTP_HOSTNAME}
+  current_git_branch=$2
+  [[ $current_git_branch == "" ]] && current_git_branch=$(git rev-parse --abbrev-ref HEAD)
+  job=${job_root_url#*/job/}
+  job=${job//\/job/}
+  job=${job//$(get_main_branch_name)/$current_git_branch}
+  jenkins_cli_jar_path=$(mktemp --suffix=.jar)
+  wget -q "https://${JENKINS_HOSTNAME}/jnlpJars/jenkins-cli.jar" -O "${jenkins_cli_jar_path}"
+  echo "=> Trigger Jenkins job '${job}'"
+  java -jar "$jenkins_cli_jar_path" -http -s "https://${JENKINS_HOSTNAME}" -auth "${username}:${password}" build "$job"
 }
 
 ########################################
 #                Git
 ########################################
+alias gib='branches=$(git branch -a) && echo "$branches"'
 alias gicp='git cherry-pick'
 alias gil='git log --graph --oneline --color --decorate'
 alias gir="git_rebase_origin"
@@ -240,17 +244,18 @@ alias gipc="git_propagate_commits"
 alias giri='git rebase -i '
 alias girst='git reset --hard '
 alias gip='git update-index --chmod=+x '
+alias gia='git commit --amend --no-edit'
 alias giap='git commit --amend --no-edit && git push -f'
-alias gidb='deleteOldBranches'
+alias gidb='delete_git_branch'
 alias girsto='git_reset_to_origin'
 alias girc='GIT_EDITOR=true git rebase --continue'
-alias gdb='delete_git_branch'
 alias cc='clonecode'
 
 function delete_git_branch() {
   if [[ $1 != "" ]]
   then
-    git push --delete origin $1
+    git push --delete origin "$1"
+    git branch -D "$1"
   fi
   deleteOldBranches
 }
@@ -298,11 +303,12 @@ function git_rebase_origin() {
 }
 
 function get_main_branch_name() {
-  if [[ ! -z $(git ls-remote --heads origin master) ]];
+  repo=${1:-origin}
+  if [[ $(git ls-remote --heads "$repo" main) != "" ]];
   then
-    echo "master"
-  else
     echo "main"
+  else
+    echo "master"
   fi
 }
 
@@ -316,12 +322,16 @@ function git_reset_to_origin() {
 
 function deleteOldBranches() {
   git fetch -p
-  git branch -vv | grep ': gone]'| grep -v "\*" | awk '{ print $1; }' | xargs -r git branch -D
-  branches=$(git branch -a)
-  echo "$branches"
+  git branch -vv | grep -E ': (disparue|gone)]' | grep -v "\*" | awk '{ print $1; }' | xargs -r git branch -D
+  if [[ ! $SILENT ]]
+  then
+    branches=$(git branch -a)
+    echo "$branches"
+  fi
 }
 
 function deleteOldBranchesInEachRepo() {
+  title0 "Delete old git branches in each repository"
   for git_folder in "${HOME}/dev/"*/.git
   do
     [[ -d "$git_folder" ]] || continue
@@ -348,9 +358,7 @@ function clonecode() {
   fi
   echo "=> Open \"$target_dir\" in VScode"
   code "${HOME}/dev/$target_dir"
-  configure_vscode_jenkins_plugin "${HOME}/dev/$target_dir"
 }
-
 
 function custom_rebase() {
   if [[ "$1" == "" ]];
@@ -360,7 +368,7 @@ function custom_rebase() {
   fi
   tmp=$(mktemp)
   git archive --format=tar HEAD > "$tmp"
-  git reset --hard $1
+  git reset --hard "$1"
   if [[ "$2" == "-d" ]];
   then
     rm -rf *
@@ -369,6 +377,23 @@ function custom_rebase() {
   rm -f "$tmp"
 }
 
+function cross_cherry_pick() {
+  source_repo_name=$1
+  if [[ "$source_repo_name" == "" ]];
+  then
+    echo -e "${RED}Error, one argument required : git repo name that contains the commit to import"
+    return 1
+  fi
+  gitlab_hostname=${3}
+  [[ $gitlab_hostname == "" ]] && gitlab_hostname=$(git remote get-url origin | sed -n 's#.*@\([^:/]*\).*#\1#p')
+  git remote add cross_cherry_pick "git@${gitlab_hostname}:${source_repo_name}.git"
+  git fetch cross_cherry_pick
+
+  git_ref=${2}
+  [[ $git_ref == "" ]] && git_ref="$(get_main_branch_name cross_cherry_pick)"
+  git cherry-pick "cross_cherry_pick/$git_ref"
+  git remote remove cross_cherry_pick
+}
 
 ############################################################
 #                          Proxy
@@ -398,7 +423,7 @@ function check_internet_connection() {
 
 # Check corporate access, fail after 15s
 function check_corporate_connection() {
-  if [[ "$(curl -m 5 -L -s -o /dev/null -I -w '%{http_code}' https://repo.int.be.continental.cloud)" == "200" ]]
+  if [[ "$(curl -m 5 -L -s -o /dev/null -I -w '%{http_code}' https://xxxx)" == "200" ]]
   then
     echo -e "${GREEN}OK"
     return 0
@@ -422,8 +447,9 @@ function check_dns() {
 
 alias prs='proxy_status'
 function proxy_status() {
-  echo -en "${DEFAULT}CNTLM : ${GREEN}"; sudo systemctl is-active cntlm.service
-  echo -en "${DEFAULT}REDSOCKS : ${GREEN}"; sudo systemctl is-active redsocks.service
+  echo -en "${DEFAULT}WSL-VPNKIT : ${GREEN}"; sudo systemctl is-active wsl-vpnkit
+  echo -en "${DEFAULT}CNTLM : ${GREEN}"; sudo systemctl is-active cntlm
+  echo -en "${DEFAULT}GOST : ${GREEN}"; sudo systemctl is-active gost
   echo -en "${DEFAULT}INTERNET CONNECTION : "; check_internet_connection
   echo -en "${DEFAULT}CORPORATE_CONNECTION : "; check_corporate_connection
   echo -en "${DEFAULT}DNS_CONNECTION : "; check_dns
@@ -432,16 +458,24 @@ function proxy_status() {
 
 # Proxy management
 alias proxy_unset='unset http{s,}_proxy && unset HTTP{S,}_PROXY && unset FTP_PROXY && unset ftp_proxy && unset ALL_PROXY && unset all_proxy'
-alias proxy_start='sudo systemctl daemon-reload && sudo systemctl start cntlm.service && sudo systemctl start redsocks.service; sleep 2; proxy_status'
-alias proxy_stop='sudo systemctl stop redsocks.service cntlm.service; sleep 2; proxy_status'
+alias proxy_start='sudo systemctl daemon-reload && sudo systemctl start wsl-vpnkit && sudo systemctl start cntlm && sudo systemctl start gost; sleep 2; proxy_status'
+alias proxy_stop='sudo systemctl stop wsl-vpnkit gost cntlm; sleep 2; proxy_status'
 
 alias rep='proxy_restart'
-function proxy_restart() {
+proxy_restart () {
   sudo systemctl daemon-reload
-  sudo systemctl restart cntlm 
-  sudo systemctl restart redsocks 
+  sudo systemctl stop gost
+  sudo systemctl stop cntlm
+  sudo systemctl stop wsl-vpnkit
+  sudo systemctl reset-failed
+  sudo /usr/local/sbin/redsocks-iptables unset
+  sleep 5
+  sudo systemctl start wsl-vpnkit
+  sudo systemctl start cntlm
+  sudo systemctl start gost
   sudo systemctl restart systemd-resolved
-  sleep 2
+  sudo netplan apply
+  sleep 5
   proxy_status
 }
 
@@ -451,11 +485,6 @@ function dns_restart() {
   sudo systemctl restart systemd-resolved
   sleep 5
   proxy_status
-}
-
-function cntlm_hash_passwd() {
-  cntlm -u uia59190@cw01 -H
-  echo "sudo gedit /etc/cntlm.conf"
 }
 
 ########################################
@@ -475,7 +504,7 @@ function docker_sh() {
     docker_run "$1" sh
 }
 function docker_enter() {
-    docker_bash $1 || docker_sh $1
+    docker_bash "$1" || docker_sh "$1"
 }
 
 alias dop='docker_prune'
@@ -485,16 +514,25 @@ alias dos='docker_sh'
 alias doi='docker images'
 alias doe='docker_enter'
 
+alias push_to_all_ecr='$HOME/dev/oam.builds.jenkins.shared-lib.common/resources/gtp/push_to_ecr.sh -e all -i '
+
 # Portainer
 alias portainer='docker run -d -p 9001:9000 --name portainer -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer'
 alias portainer_stop='docker rm -f portainer'
+
+function dockerhub_rate_limit() {
+  TOKEN=$(curl -s --user "$DOCKERHUB_USERNAME:$DOCKERHUB_TOKEN" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull" | jq -r .token)
+  curl -s --head -H "Authorization: Bearer $TOKEN" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest | grep 'ratelimit'
+}
 
 ########################################
 #                 K8S
 ########################################
 # shellcheck disable=SC1090
-source <(kubectl completion zsh)
+source <(kubectl completion bash)
 
+alias k='kubecolor'
+alias kubectl='kubecolor'
 # alias kon='kubeon'
 alias kns='kubens'
 alias kcx='set_kubeconfigs && kubectx'
@@ -511,6 +549,7 @@ alias kd='kubectl describe'
 alias kdr='kubectl describe rollout'
 alias kda='kubectl describe analysisruns'
 alias klf='kubectl logs -f --tail 100'
+alias ks="kubectl get -o jsonpath='{.status}'"
 alias kkyv='kubectl describe polr | grep "Result: \+fail" -B10'
 alias kgpf='kubectl get po -A | grep -v Running | grep -v Completed'
 alias kgpfw='kubectl get po -A -o wide | grep -v Running | grep -v Completed'
@@ -523,7 +562,7 @@ alias kv='view_k8s_manifest'
 function view_k8s_manifest () {
   temp_file=$(mktemp --suffix=.yaml)
   kubectl get -o yaml "$@" > "$temp_file"
-  code "$temp_file"
+  [[ -s $temp_file ]] && code "$temp_file"
 }
 
 function disable_kyverno () {
@@ -534,8 +573,10 @@ function enable_kyverno () {
 }
 
 function open_cloud_init() {
+  ip=$(echo "${1?}" | sed 's/ip-\([0-9]\{1,3\}-[0-9]\{1,3\}-[0-9]\{1,3\}-[0-9]\{1,3\}\).*/\1/')
+  ip=${ip//-/.}
   temp_file=$(mktemp --suffix=.log)
-  scp "${1?}:/var/log/cloud-init-output.log" "$temp_file"
+  scp "${ip}:/var/log/cloud-init-output.log" "$temp_file"
   code "$temp_file"
 }
 
@@ -568,7 +609,7 @@ function kg_composition_errors() {
 
 function argocd_sync_app() {
   app=${1?}
-  argocd login cd.argoproj.io --core
+  argocd login --core
   argocd app terminate-op "$app"
   argocd app sync "$app"
 }
@@ -584,9 +625,9 @@ function disable_argocd() {
 function kubeops() {
   echo "Searching kube config..."
   if [ -z "$1" ]; then
-    if [[ -e $KUBECONFIG ]]; then 
+    if [[ -e $KUBECONFIG ]]; then
       echo "No argument => loading current KUBECONFIG ($KUBECONFIG) !"
-      CONFIGFILE=$(basename $KUBECONFIG)
+      CONFIGFILE=$(basename "$KUBECONFIG")
     else
       echo "No KUBECONFIG : Either set KUBECONFIG env var or pass a kubeconfig name as argument"
       echo ""
@@ -595,7 +636,7 @@ function kubeops() {
       echo "------------------------------------"
       echo "List of available kube config :"
       echo "------------------------------------"
-      find ${HOME}/.kube/ -maxdepth 1 -name "*config*" -exec sh -c 'basename "$1"' find-sh {} \;
+      find "${HOME}/.kube/" -maxdepth 1 -name "*config*" -exec sh -c 'basename "$1"' find-sh {} \;
       return
     fi
   else
@@ -691,9 +732,9 @@ function gencert() {
 function import_ssh_key() {
   if [[ "$1" == "" ]];
   then
-    ls /media/sf_sharedfolder/.ssh
+    ls /mnt/d/sharedfolder/.ssh
   else
-    cp "/media/sf_sharedfolder/.ssh/$1" "${HOME}/.ssh"
+    cp "/mnt/d/sharedfolder/.ssh/$1" "${HOME}/.ssh"
     chmod 400 "${HOME}/.ssh/$1"
   fi
 }
@@ -714,7 +755,7 @@ function set_ssh_config() {
 
 function manage_pgp() {
   gpg --list-secret-keys --keyid-format LONG
-  echo "Create new key : vi ${HOME}/.gpg/config && gpg --batch --gen-key config"
+  echo "Create new key : vi ${HOME}/.gpg/config && gpg --batch --gen-key ${HOME}/.gpg/config"
   echo "Delete key : gpg --delete-secret-and-public-key --batch --yes XXXXXXXXXXXXXXXXX"
   echo "Import key : gpg --import ${HOME}/.gpg/xxxxxxxxxxx.asc"
   echo "Export public key : gpg --export --armor XXXXXXXXXXXXXXXXX > ${HOME}/.gpg/gpg_xxxxxxxxxxx_public.asc && chmod 644 ${HOME}/.gpg/gpg_xxxxxxxxxxx_public.asc"
@@ -740,27 +781,7 @@ function check_aws_connection() {
 }
 
 function aws_decode-authorization-message() {
-  aws sts decode-authorization-message --encoded-message $1 --query 'DecodedMessage' --output text | jq
-}
-
-#################################
-# GCP
-#################################
-
-function get_gke_kubeconfig {
-  CLUSTER_NAME=$1
-  if [[ "$CLUSTER_NAME" == "" ]];
-  then
-    echo -e "${RED}Error, 1 argument required : CLUSTER_NAME"
-    echo -e "${DEFAULT}------"
-    gcloud container clusters list
-    return 1
-  fi
-  export KUBECONFIG="${HOME}/.kube/kubeconfig_gcp_${CLUSTER_NAME}"
-  [[ -f $KUBECONFIG ]] && rm "$KUBECONFIG"
-  touch "$KUBECONFIG"
-  gcloud container clusters get-credentials "${CLUSTER_NAME}" --region europe-west3 --project gcp1002d-i3x5x6ms
-  # kubeon
-  kubectl cluster-info
-  kubectl get ns
+  temp_file=$(mktemp --suffix=.json)
+  aws sts decode-authorization-message --encoded-message $1 --query 'DecodedMessage' --output text | jq > "$temp_file"
+  code "$temp_file"
 }

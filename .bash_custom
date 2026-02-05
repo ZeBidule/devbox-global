@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# shellcheck disable=SC2034
-plugins=(git docker kubectl terraform aws colored-man-pages zsh-autosuggestions)
-
-# shellcheck disable=SC1091
-source "$ZSH/oh-my-zsh.sh"
-
-fpath=($ZSH/custom/completions $fpath)
-
 # #####################################
 # Load devbox tools
 # #####################################
@@ -18,29 +10,36 @@ then
   . "/home/antoine/.nix-profile/etc/profile.d/nix.sh"
 fi # added by Nix installer
 
-devbox completion zsh > "${fpath[1]}/_devbox"
+
+# #####################################
+# Load environment variables
+# #####################################
+# shellcheck disable=SC1091
+. "$HOME/.bash_env"
 
 # #####################################
 # Load aliases
 # #####################################
 # shellcheck disable=SC1091
-. "$HOME/.zsh_aliases"
+. "$HOME/.bash_aliases"
 
 # #####################################
 # Load fzf completion
 # #####################################
-if [[ -n "${commands[fzf-share]}" ]]
-then
-  # shellcheck disable=SC1091
-  source "$(fzf-share)/key-bindings.zsh"
-  # shellcheck disable=SC1091
-  source "$(fzf-share)/completion.zsh"
-fi
+# Set up fzf key bindings and fuzzy completion
+eval "$(fzf --bash)"
+# if [[ -n "${commands[fzf-share]}" ]]
+# then
+#   # shellcheck disable=SC1091
+#   source "$(fzf-share)/key-bindings.bash"
+#   # shellcheck disable=SC1091
+#   source "$(fzf-share)/completion.bash"
+# fi
 
 # ############################################
 # Prompt
 # ############################################
-eval "$(starship init zsh)"
+eval "$(starship init bash)"
 
 
 # fix ansible launch
@@ -50,19 +49,21 @@ eval "$(starship init zsh)"
 # Commands to launch at each terminal start
 # ############################################
 
-if [[ $(systemctl is-active cntlm.service) != "active" || $(systemctl is-active redsocks.service) != "active" ]]
+if [[ $(systemctl is-active cntlm) != "active" || $(systemctl is-active gost) != "active" || $(systemctl is-active wsl-vpnkit) != "active" ]]
 then
   proxy_start
 fi
-# if [[ $(systemctl is-active cntlm.service) == "active" || $(systemctl is-active redsocks.service) == "active" ]]
-# then
-#   proxy_stop
-# fi
 
 if [[ ! -f "$HOME/.last_update" || $(cat "$HOME/.last_update") -lt $(date -d '1 week ago' '+%s') ]]
 then
   date '+%s' > "$HOME/.last_update"
   update
+fi
+
+if [[ ! -f "$HOME/.last_backup" || $(cat "$HOME/.last_backup") -lt $(date -d '1 day ago' '+%s') ]]
+then
+  date '+%s' > "$HOME/.last_backup"
+  backup
 fi
 
 if [[ ! -f "$HOME/.last_free_space" || $(cat "$HOME/.last_free_space") -lt $(date -d '1 week ago' '+%s') ]]

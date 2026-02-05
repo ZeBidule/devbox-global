@@ -35,10 +35,13 @@
     "unzip@latest",
     "fontconfig@latest",
     "wget@latest",
-    "kubernetes@1.31",
+    "kubernetes@1.32",
     "devbox@latest",
     "kustomize@latest",
-    "gum@latest"
+    "gum@latest",
+    "gh@latest",
+    "krew@latest",
+    "kubeconform@latest"
   ],
   "env": {
     "DEVBOX_GLOBAL_PREFIX": "$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default",
