@@ -10,6 +10,12 @@ then
   . "/home/antoine/.nix-profile/etc/profile.d/nix.sh"
 fi # added by Nix installer
 
+# #####################################
+# Load blesh (must be loaded early)
+# #####################################
+BLESH_PATH=$(ls -d /nix/store/*blesh*/share/blesh/ble.sh 2>/dev/null | head -1)
+# shellcheck disable=SC1090
+[[ -n "$BLESH_PATH" ]] && source "$BLESH_PATH"
 
 # #####################################
 # Load environment variables
@@ -28,13 +34,10 @@ fi # added by Nix installer
 # #####################################
 # Set up fzf key bindings and fuzzy completion
 eval "$(fzf --bash)"
-# if [[ -n "${commands[fzf-share]}" ]]
-# then
-#   # shellcheck disable=SC1091
-#   source "$(fzf-share)/key-bindings.bash"
-#   # shellcheck disable=SC1091
-#   source "$(fzf-share)/completion.bash"
-# fi
+# shellcheck disable=SC1091
+source "$(fzf-share)/key-bindings.bash"
+# shellcheck disable=SC1091
+source "$(fzf-share)/completion.bash"
 
 # ############################################
 # Prompt
