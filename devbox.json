@@ -41,7 +41,9 @@
     "gum@latest",
     "gh@latest",
     "krew@latest",
-    "kubeconform@latest"
+    "kubeconform@latest",
+    "blesh@latest",
+    "xdg-utils@latest"
   ],
   "env": {
     "DEVBOX_GLOBAL_PREFIX": "$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default",
