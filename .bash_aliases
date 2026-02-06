@@ -53,8 +53,7 @@ function update() {
 
 function backup() {
   sudo cp -Lr "${HOME}/.bash_history" "${HOME}/.bash_env" "${HOME}/.bash_custom" "${HOME}/.bash_aliases" \
-    "${HOME}/.config/starship.toml" "${HOME}/.gitconfig" \
-    "${HOME}/.ssh" "${HOME}/.gpg" "${HOME}/.aws" \
+    "${HOME}/.config/starship.toml" "${HOME}/.inputrc" "${HOME}/.gitconfig" "${HOME}/.aws" \
     /etc/cntlm.conf "$(devbox global path)/devbox.json" \
     /mnt/d/sharedfolder
   sudo mkdir -p /mnt/d/sharedfolder/.kube
@@ -371,7 +370,7 @@ function custom_rebase() {
   git reset --hard "$1"
   if [[ "$2" == "-d" ]];
   then
-    rm -rf *
+    rm -rf ./*
   fi
   tar xf "$tmp"
   rm -f "$tmp"
@@ -573,6 +572,7 @@ function enable_kyverno () {
 }
 
 function open_cloud_init() {
+  # shellcheck disable=SC2001
   ip=$(echo "${1?}" | sed 's/ip-\([0-9]\{1,3\}-[0-9]\{1,3\}-[0-9]\{1,3\}-[0-9]\{1,3\}\).*/\1/')
   ip=${ip//-/.}
   temp_file=$(mktemp --suffix=.log)
@@ -594,7 +594,7 @@ function k_get_all() {
 }
 
 function k_remove_finalizers() {
-  kubectl patch $1 --type json --patch='[ { "op": "remove", "path": "/metadata/finalizers" } ]'
+  kubectl patch "$1" --type json --patch='[ { "op": "remove", "path": "/metadata/finalizers" } ]'
 }
 
 function k_force_remove_finalizers() {
@@ -667,6 +667,7 @@ function kssh {
 
 function convert_to_kustomize {
   dir=${1:=.}
+  # shellcheck disable=SC1091
   [[ -f ".version" ]] && source .version
   pushd "$dir" || return
   [[ -f "kustomization.yaml" ]] && rm "kustomization.yaml"
@@ -716,7 +717,7 @@ function push_tf_backend() {
 function gencert() {
   mkdir -p /tmp/cert
   echo "test DNS command : dig -t txt +short _acme-challenge.${1} @8.8.8.8"
-  docker run --rm -it --network=host -v /tmp/cert:/etc/letsencrypt certbot/certbot certonly --manual -d $1 -d \*.$1 --preferred-challenges dns && \
+  docker run --rm -it --network=host -v /tmp/cert:/etc/letsencrypt certbot/certbot certonly --manual -d "$1" -d \*."$1" --preferred-challenges dns && \
   sudo mv "${HOME}/.certs/${1}.pem" "${HOME}/.certs/${1}_$(date '+%Y%m%d').pem" | true && \
   sudo mv "${HOME}/.certs/${1}.key" "${HOME}/.certs/${1}_$(date '+%Y%m%d').key" | true && \
   sudo cp "/tmp/cert/live/${1}/fullchain.pem" "${HOME}/.certs/${1}.pem" && \
@@ -782,6 +783,6 @@ function check_aws_connection() {
 
 function aws_decode-authorization-message() {
   temp_file=$(mktemp --suffix=.json)
-  aws sts decode-authorization-message --encoded-message $1 --query 'DecodedMessage' --output text | jq > "$temp_file"
+  aws sts decode-authorization-message --encoded-message "$1" --query 'DecodedMessage' --output text | jq > "$temp_file"
   code "$temp_file"
 }
