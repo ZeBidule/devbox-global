@@ -43,7 +43,8 @@
     "krew@latest",
     "kubeconform@latest",
     "blesh@latest",
-    "xdg-utils@latest"
+    "xdg-utils@latest",
+    "fish@latest"
   ],
   "env": {
     "DEVBOX_GLOBAL_PREFIX": "$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default",
