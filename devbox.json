@@ -13,7 +13,6 @@
     "bat@latest",
     "htop@latest",
     "zoxide@latest",
-    "fzf-zsh@latest",
     "eza@latest",
     "starship@latest",
     "jq@latest",
@@ -43,8 +42,7 @@
     "krew@latest",
     "kubeconform@latest",
     "blesh@latest",
-    "xdg-utils@latest",
-    "fish@latest"
+    "xdg-utils@latest"
   ],
   "env": {
     "DEVBOX_GLOBAL_PREFIX": "$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default",
