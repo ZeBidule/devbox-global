@@ -13,9 +13,8 @@ fi # added by Nix installer
 # #####################################
 # Load blesh (must be loaded early)
 # #####################################
-# BLESH_PATH=$(ls -d /nix/store/*blesh*/share/blesh/ble.sh 2>/dev/null | head -1)
-# # shellcheck disable=SC1090
-# [[ -n "$BLESH_PATH" ]] && source "$BLESH_PATH"
+# shellcheck disable=SC1091
+source "$(blesh-share)/ble.sh"
 
 # #####################################
 # Load environment variables
