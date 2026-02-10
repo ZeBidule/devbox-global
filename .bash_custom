@@ -82,5 +82,6 @@ fi
 
 if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
 then
+  sleep 3
   sfa
 fi
