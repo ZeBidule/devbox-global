@@ -40,6 +40,7 @@ function install_fonts() {
 }
 
 function update() {
+  title0 "Update system and devbox packages"
   devbox version update
   eval "$(devbox global shellenv --recompute)"
   refresh-global
@@ -53,15 +54,27 @@ function update() {
 
 function backup() {
   sudo cp -Lr "${HOME}/.bash_history" "${HOME}/.bash_env" "${HOME}/.bash_custom" "${HOME}/.bash_aliases" \
-    "${HOME}/.config/starship.toml" "${HOME}/.inputrc" "${HOME}/.gitconfig" "${HOME}/.aws" \
+    "${HOME}/.config/starship.toml" "${HOME}/.gitconfig" "${HOME}/.aws" \
     /etc/cntlm.conf "$(devbox global path)/devbox.json" \
     /mnt/d/sharedfolder
+    sudo mkdir -p /mnt/d/sharedfolder/.ssh
+    for file in "${HOME}/.ssh/"*; do
+      filename=$(basename "$file")
+      sudo rm -f "/mnt/d/sharedfolder/.ssh/$filename"
+      sudo cp -L "$file" "/mnt/d/sharedfolder/.ssh/$filename"
+    done
+    for file in "${HOME}/.gpg/"*; do
+      filename=$(basename "$file")
+      sudo rm -f "/mnt/d/sharedfolder/.gpg/$filename"
+      sudo cp -L "$file" "/mnt/d/sharedfolder/.gpg/$filename"
+    done
+
   sudo mkdir -p /mnt/d/sharedfolder/.kube
   sudo cp -r "${HOME}/.kube/kubeconfig"* "/mnt/d/sharedfolder/.kube"
 
   # copy in my github repo
-  sudo cp "${HOME}/.bash_custom" \
-    "${HOME}/.config/starship.toml" "$(devbox global path)/devbox.json" \
+  sudo cp "${HOME}/.bash_custom" "${HOME}/.config/starship.toml" \
+    "$(devbox global path)/devbox.json" \
     "${HOME}/dev/ZeBidule.devbox-global"
   pushd "${HOME}/dev/ZeBidule.devbox-global" > /dev/null || return
   git add .bash_custom starship.toml > /dev/null
@@ -180,10 +193,11 @@ function debug {
 ########################################
 function get_jenkins_job_url() {
   git_root_folder=${1:-$(pwd)}
+  get_root_url=${2:-false}
 
   pushd "${git_root_folder}" > /dev/null || return
   git_url=$(git remote get-url origin)
-  main_branch_name=$(get_main_branch_name)
+  git_branch=$(git rev-parse --abrev-ref HEAD)
   popd > /dev/null 2>&1 || true
 
   git_project_name=$(echo "$git_url" | perl -lne 'print $1 if /git@.+:(.+)\.git/')
@@ -193,7 +207,12 @@ function get_jenkins_job_url() {
     return 1
   fi
   jenkins_organization_name="$(echo "${git_project_name%%/*}" | tr '[:lower:]' '[:upper:]')"
-  echo -n "https://${JENKINS_GTP_HOSTNAME}/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}/job/${main_branch_name}"
+  if [[ $get_root_url == "true" ]]
+  then
+    echo -n "https://${JENKINS_GTP_HOSTNAME}/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}"
+  else
+    echo -n "https://${JENKINS_GTP_HOSTNAME}/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}/job/${git_branch}"
+  fi
 }
 
 function allow_jenkins_slave_ssh() {
@@ -211,8 +230,8 @@ function trigger_jenkins() {
 function trigger_jenkins_scan() {
   username=$JENKINS_GTP_USER
   password=$JENKINS_GTP_API_TOKEN
-  job_root_url=$(get_jenkins_job_url)
-  echo curl -u "$username:$password" -X POST "$job_root_url/build"
+  job_root_url=$(get_jenkins_job_url '' 'true')
+  curl -u "$username:$password" -X POST "$job_root_url/build"
 }
 
 function trigger_jenkins_job() {
@@ -422,7 +441,7 @@ function check_internet_connection() {
 
 # Check corporate access, fail after 15s
 function check_corporate_connection() {
-  if [[ "$(curl -m 5 -L -s -o /dev/null -I -w '%{http_code}' https://xxxx)" == "200" ]]
+  if [[ "$(curl -m 5 -L -s -o /dev/null -I -w '%{http_code}' https://xxx)" == "200" ]]
   then
     echo -e "${GREEN}OK"
     return 0
@@ -605,7 +624,6 @@ function k_force_remove_finalizers() {
 function kg_composition_errors() {
   kubectl get "$1" "$2" -o=jsonpath='{.spec.resourceRef}{" "}{.spec.resourceRefs}' | jq '.[] | select( .name == null)'
 }
-
 
 function argocd_sync_app() {
   app=${1?}
