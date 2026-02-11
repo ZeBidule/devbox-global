@@ -14,7 +14,16 @@ fi # added by Nix installer
 # Load blesh (must be loaded early)
 # #####################################
 # shellcheck disable=SC1091
-source "$(blesh-share)/ble.sh"
+# source "$(blesh-share)/ble.sh"
+export HISTORY_SUGGESTION_SCRIPT="/home/antoine/dev/ZeBidule.bash-history-auto-suggestion/history-auto-suggestion.sh"
+
+_show_suggestion() {
+    if [[ -n "$READLINE_LINE" ]]; then
+        "$HISTORY_SUGGESTION_SCRIPT" "$READLINE_LINE" 2>/dev/null | sed 's/^/\033[90m/' | sed 's/$/\033[0m/'
+    fi
+}
+
+bind -x '"\e\C-s": "_show_suggestion"'
 
 # #####################################
 # Load environment variables
