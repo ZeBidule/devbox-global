@@ -8,7 +8,7 @@ In your previous VM, make sure to backup all important files in a folder located
 ```sh
 function backup() {
   sudo cp -Lr "${HOME}/.bash_history" "${HOME}/.bash_env" "${HOME}/.bash_custom" "${HOME}/.bash_aliases" \
-    "${HOME}/.config/starship.toml" "${HOME}/.inputrc" "${HOME}/.gitconfig" "${HOME}/.aws" \
+    "${HOME}/.config/starship.toml" "${HOME}/.gitconfig" "${HOME}/.aws" \
     /etc/cntlm.conf "$(devbox global path)/devbox.json" \
     /mnt/d/sharedfolder
   sudo mkdir -p /mnt/d/sharedfolder/.kube
@@ -59,7 +59,7 @@ Note: you can use the files located in this Github repository and adapt them to 
 
 ## Restore previous VM config
 ```sh
-cp -r /mnt/d/sharedfolder/.bash_history /mnt/d/sharedfolder/.bash_env /mnt/d/sharedfolder/.bash_custom /mnt/d/sharedfolder/.bash_aliases /mnt/d/sharedfolder/.inputrc \
+cp -r /mnt/d/sharedfolder/.bash_history /mnt/d/sharedfolder/.bash_env /mnt/d/sharedfolder/.bash_custom /mnt/d/sharedfolder/.bash_aliases \
     /mnt/d/sharedfolder/.gitconfig \
     /mnt/d/sharedfolder/.ssh /mnt/d/sharedfolder/.gpg /mnt/d/sharedfolder/.aws /mnt/d/sharedfolder/.kube \
     "${HOME}"
@@ -92,6 +92,8 @@ eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r
 ```sh
 curl -sS https://starship.rs/install.sh | sh
 krew install view-secret
+curl -sL https://raw.githubusercontent.com/yogeek/bash-autosuggestions/main/bash-autosuggestions.sh \
+  -o ~/.local/share/bash-autosuggestions/bash-autosuggestions.sh --create-dirs
 ```
 
 ## Install AWS-SSO-cli

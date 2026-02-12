@@ -3,10 +3,10 @@
 # #####################################
 # Exit early if not interactive
 # #####################################
-case $- in
-    *i*) ;;
-    *) return ;;
-esac
+# case $- in
+#     *i*) ;;
+#     *) return ;;
+# esac
 
 # Or:
 # [ -z "$PS1" ] && return
@@ -26,10 +26,14 @@ then
 fi # added by Nix installer
 
 # #####################################
-# Load blesh (must be loaded early)
+# Load autosuggestions
 # #####################################
 # shellcheck disable=SC1091
 # source "$(blesh-share)/ble.sh"
+
+# Fish-like autosuggestions for bash
+[[ -f "/home/antoine/.local/share/bash-autosuggestions/bash-autosuggestions.sh" ]] && source "/home/antoine/.local/share/bash-autosuggestions/bash-autosuggestions.sh"
+
 
 # #####################################
 # Load environment variables
@@ -97,6 +101,5 @@ fi
 
 if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
 then
-  sleep 3
-  sfa
+  [[ "$TERM_PROGRAM" == "vscode" ]] && sfa
 fi
