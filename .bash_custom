@@ -70,10 +70,10 @@ eval "$(starship init bash)"
 # Commands to launch at each terminal start
 # ############################################
 
-if [[ $(systemctl is-active cntlm) != "active" || $(systemctl is-active gost) != "active" || $(systemctl is-active wsl-vpnkit) != "active" ]]
-then
-  proxy_start
-fi
+# if [[ $(systemctl is-active cntlm) != "active" || $(systemctl is-active gost) != "active" || $(systemctl is-active wsl-vpnkit) != "active" ]]
+# then
+#   proxy_start
+# fi
 
 if [[ ! -f "$HOME/.last_update" || $(cat "$HOME/.last_update") -lt $(date -d '1 week ago' '+%s') ]]
 then
