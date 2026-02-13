@@ -34,30 +34,37 @@ Note: you can use the files located in this Github repository and adapt them to 
 
 4. Restart your computer
 
-## Configure networking for WSL VM to have internet access using the transparent proxy
+5. Open a POWERSHELL window to configure networking for WSL VM (if you need to use a transparent proxy, follow the instructions in [this guide](archive/use_nat_and_proxy.md)):
+    - Check that all WSL are "Stopped" :
+        ```
+        wsl -l -v
+        ```
+    - Create or edit the WSL configuration file  :
+        ```
+        code .\.wslconfig
+        ```
+        and copy the following content :
+        ```
+        [wsl2]
+        networkingMode=mirrored
+        [experimental]
+        autoMemoryReclaim=gradual
+        sparseVhd=true
+        hostAddressLoopback=true
+        ```
 
-1. Download `wsl-vpnkit.tar.gz` from https://github.com/sakai135/wsl-vpnkit/releases/latest
-
-2. Open a POWERSHELL window **WITHOUT ADMIN RIGHTS** and execute the following commands (make sure to replace the path of the tar.gz file if needed) :
-    ```
-    wsl.exe --set-default-version 2
-    wsl --import wsl-vpnkit --version 2 $env:USERPROFILE\wsl-vpnkit "C:\Users\uia59190\Downloads\wsl-vpnkit.tar.gz"
-    ```
-
-3. Open Ubuntu from the Windows menu and execute the following commands to start wsl-vpnkit :
-    ```sh
-    nohup wsl.exe -d wsl-vpnkit --cd /app wsl-vpnkit start </dev/null >/dev/null 2>&
-    curl ip.me
-    ```
-
-4. Open Ubuntu from the Windows menu and execute the following script to install wsl-vpnkit, cntlm and redsocks as linux services :
-    ```sh
-    curl https://raw.githubusercontent.com/ZeBidule/devbox-global/refs/heads/main/install_network.sh -o /tmp/install_network.sh
-    chmod +x /tmp/install_network.sh
-    sudo bash -x /tmp/install_network.sh
-    ```
+## Download corporate root CA certificate
+In your WSL terminal :
+```sh
+echo | openssl s_client -connect pokeapi.co:443 -showcerts 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee /usr/local/share/ca-certificates/automotiverootca.crt && sudo update-ca-certificates
+```
+Restart your WSL instance :
+```sh
+wsl.exe --shutdown
+```
 
 ## Restore previous VM config
+In your WSL terminal :
 ```sh
 cp -r /mnt/d/sharedfolder/.bash_history /mnt/d/sharedfolder/.bash_env /mnt/d/sharedfolder/.bash_custom /mnt/d/sharedfolder/.bash_aliases \
     /mnt/d/sharedfolder/.gitconfig \
@@ -74,12 +81,14 @@ gpg --import "$HOME/.gpg/xxx.asc"
 ```
 
 ## Remove sudoer password
+In your WSL terminal :
 ```sh
 sudo visudo
 ```
 => Add NOPASSWD to line "%sudo   ALL=(ALL:ALL) NOPASSWD: ALL"
 
 ## Install and init devbox
+In your WSL terminal :
 ```sh
 curl -fsSL https://get.jetpack.io/devbox | bash
 cp /mnt/d/sharedfolder/devbox.json /home/antoine/.local/share/devbox/global/default
@@ -89,6 +98,7 @@ eval "$(devbox global shellenv --preserve-path-stack -r)" && hash -r
 ```
 
 ## Install terminal helpers
+In your WSL terminal :
 ```sh
 curl -sS https://starship.rs/install.sh | sh
 krew install view-secret
@@ -97,12 +107,14 @@ curl -sL https://raw.githubusercontent.com/yogeek/bash-autosuggestions/main/bash
 ```
 
 ## Install AWS-SSO-cli
+In your WSL terminal :
 ```sh
 update_aws_sso_cli
 ```
 => Modify your "sso_login" alias to replace "aws-sso-cli configure browser none" by "aws-sso-cli configure browser default"
 
 ## Install kubectx and kubens manually because completion does not work if installed with krew
+In your WSL terminal :
 ```sh
 sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
 sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
@@ -113,6 +125,7 @@ ln -sf /opt/kubectx/completion/kubectx.bash $COMPDIR/kubectx
 ```
 
 ## Install Docker
+In your WSL terminal :
 ```sh
 curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker $USER && newgrp docker
 ```
@@ -123,6 +136,7 @@ curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker $USER && newgr
 3. Configure your VSCode settings and install your favorite extensions using the settings sync feature of VSCode. You can also copy the settings.json file from your backup folder to the WSL filesystem if you don't want to use the settings sync feature.
 
 ## Clone git repositories:
+In your WSL terminal :
 ```sh
 cc "git@${GITLAB_GTP_HOSTNAME}:oam/ci/gitlab-automation.git"
 GITLAB_INSTANCE=GTP $HOME/dev/oam.ci.gitlab-automation/clone_each_repository.sh -g 5 --auto-approve

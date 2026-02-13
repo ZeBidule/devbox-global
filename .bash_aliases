@@ -476,26 +476,6 @@ function proxy_status() {
 
 # Proxy management
 alias proxy_unset='unset http{s,}_proxy && unset HTTP{S,}_PROXY && unset FTP_PROXY && unset ftp_proxy && unset ALL_PROXY && unset all_proxy'
-alias proxy_start='sudo systemctl daemon-reload && sudo systemctl start wsl-vpnkit && sudo systemctl start cntlm && sudo systemctl start gost; sleep 2; proxy_status'
-alias proxy_stop='sudo systemctl stop wsl-vpnkit gost cntlm; sleep 2; proxy_status'
-
-alias rep='proxy_restart'
-proxy_restart () {
-  sudo systemctl daemon-reload
-  sudo systemctl stop gost
-  sudo systemctl stop cntlm
-  sudo systemctl stop wsl-vpnkit
-  sudo systemctl reset-failed
-  sudo /usr/local/sbin/redsocks-iptables unset
-  sleep 5
-  sudo systemctl start wsl-vpnkit
-  sudo systemctl start cntlm
-  sudo systemctl start gost
-  sudo systemctl restart systemd-resolved
-  sudo netplan apply
-  sleep 5
-  proxy_status
-}
 
 alias red='dns_restart'
 function dns_restart() {
