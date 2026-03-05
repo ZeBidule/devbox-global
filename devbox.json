@@ -34,7 +34,7 @@
     "unzip@latest",
     "fontconfig@latest",
     "wget@latest",
-    "kubernetes@1.32",
+    "kubernetes@1.33",
     "devbox@latest",
     "kustomize@latest",
     "gum@latest",
