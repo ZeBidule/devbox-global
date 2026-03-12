@@ -101,5 +101,6 @@ fi
 
 if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
 then
-  [[ "$TERM_PROGRAM" == "vscode" ]] && sfa
+  sleep 10
+  sfa
 fi
