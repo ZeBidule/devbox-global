@@ -99,8 +99,9 @@ then
   SILENT=1 deleteOldBranchesInEachRepo
 fi
 
-if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
+# if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
+if [[ ! -f "$HOME/.last_sfa_login" || $(cat "$HOME/.last_sfa_login") != "$(date '+%Y%m%d')" ]]
 then
-  sleep 10
+  date '+%Y%m%d' > "$HOME/.last_sfa_login"
   sfa
 fi
