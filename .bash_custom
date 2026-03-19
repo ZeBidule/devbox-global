@@ -99,13 +99,14 @@ then
   SILENT=1 deleteOldBranchesInEachRepo
 fi
 
-# we skip the first check for sfa login because it is triggered by an hiden terminal during WSL startup
-if [[ ! -f "$HOME/.first_daily_sfa_login" || $(cat "$HOME/.first_daily_sfa_login") != "$(date '+%Y%m%d')" ]]
-then
-  date '+%Y%m%d' > "$HOME/.first_daily_sfa_login"
 # abandonned for perfomance issue : if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
-elif [[ ! -f "$HOME/.last_sfa_login" || $(cat "$HOME/.last_sfa_login") != "$(date '+%Y%m%d')" ]]
+if [[ ! -f "$HOME/.last_sfa_login" || $(cat "$HOME/.last_sfa_login") != "$(date '+%Y%m%d')" ]]
 then
-  date '+%Y%m%d' > "$HOME/.last_sfa_login"
+  echo "Ready to launch sfa login? (y/n)"
+  read -r response
+  if [[ "$response" != "y" ]]; then
+    return
+  fi
   sfa
+  date '+%Y%m%d' > "$HOME/.last_sfa_login"
 fi
