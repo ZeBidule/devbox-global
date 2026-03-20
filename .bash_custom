@@ -28,8 +28,11 @@ fi # added by Nix installer
 # #####################################
 # Load autosuggestions
 # #####################################
-# shellcheck disable=SC1091
-# source "$(blesh-share)/ble.sh"
+HISTSIZE=100000                    # lignes en mémoire dans la session
+HISTFILESIZE=500000                # lignes dans le fichier .bash_history
+HISTCONTROL=ignoredups:erasedups   # supprime les doublons
+HISTTIMEFORMAT="%F %T "            # horodatage des commandes
+shopt -s histappend                # append au lieu d'écraser à la fermeture du shell
 
 # Fish-like autosuggestions for bash
 [[ -f "/home/antoine/.local/share/bash-autosuggestions/bash-autosuggestions.sh" ]] && source "/home/antoine/.local/share/bash-autosuggestions/bash-autosuggestions.sh"
