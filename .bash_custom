@@ -35,7 +35,7 @@ HISTTIMEFORMAT="%F %T "            # horodatage des commandes
 shopt -s histappend                # append au lieu d'écraser à la fermeture du shell
 
 # Fish-like autosuggestions for bash
-[[ -f "/home/antoine/.local/share/bash-autosuggestions/bash-autosuggestions.sh" ]] && source "/home/antoine/.local/share/bash-autosuggestions/bash-autosuggestions.sh"
+# [[ -f "/home/antoine/.local/share/bash-autosuggestions/bash-autosuggestions.sh" ]] && source "/home/antoine/.local/share/bash-autosuggestions/bash-autosuggestions.sh"
 
 
 # #####################################
