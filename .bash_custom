@@ -105,11 +105,9 @@ fi
 # abandonned for perfomance issue : if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
 if [[ ! -f "$HOME/.last_sfa_login" || $(cat "$HOME/.last_sfa_login") != "$(date '+%Y%m%d')" ]]
 then
-  echo "Ready to launch sfa login? (y/n)"
-  read -r response
-  if [[ "$response" != "y" ]]; then
-    return
-  fi
+  read -r -p "Ready to launch sfa login? Press y to continue (Ctrl+C to skip): " -n 1 -s
+  echo
+  [[ $REPLY == "y" || $REPLY == "Y" ]] || return
   sfa
-  date '+%Y%m%d' > "$HOME/.last_sfa_login"
+  aws sts get-caller-identity --profile sfa > /dev/null 2>&1 && date '+%Y%m%d' > "$HOME/.last_sfa_login"
 fi
