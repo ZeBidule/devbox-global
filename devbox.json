@@ -26,7 +26,7 @@
     "fzf@latest",
     "terraform@latest",
     "docker@latest",
-    "jre@19",
+    "temurin-bin-21@latest",
     "ansible@latest",
     "istioctl@1.26",
     "jnv@latest",
@@ -42,7 +42,8 @@
     "krew@latest",
     "kubeconform@latest",
     "blesh@latest",
-    "xdg-utils@latest"
+    "xdg-utils@latest",
+    "nodejs@latest"
   ],
   "env": {
     "DEVBOX_GLOBAL_PREFIX": "$HOME/.local/share/devbox/global/default/.devbox/nix/profile/default",
