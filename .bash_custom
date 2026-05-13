@@ -73,6 +73,11 @@ eval "$(starship init bash)"
 # Commands to launch at each terminal start
 # ############################################
 
+# Switch OpenCode to VIO before 11am (cheaper/faster during off-peak)
+if [[ $((10#$(date +%H))) -lt 11 && "$(cat "$HOME/.last_opencode_vio_switch" 2>/dev/null)" != "$(date '+%Y%m%d')" ]]; then
+  opencode_switch_provider vio 2>/dev/null && date '+%Y%m%d' > "$HOME/.last_opencode_vio_switch"
+fi
+
 # if [[ $(systemctl is-active cntlm) != "active" || $(systemctl is-active gost) != "active" || $(systemctl is-active wsl-vpnkit) != "active" ]]
 # then
 #   proxy_start
