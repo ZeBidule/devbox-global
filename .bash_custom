@@ -1,4 +1,4 @@
-#!/bin/bash
+bin/bash
 
 # #####################################
 # Exit early if not interactive
