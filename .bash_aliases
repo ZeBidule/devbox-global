@@ -30,7 +30,7 @@ function install_fonts() {
   font_url=$1
   if [[ $font_url == "" ]]
   then
-    echo "${RED}[Error] missing parameter : font URL"
+    gum style --foreground 1 "[Error] missing parameter : font URL"
     return 1
   fi
   font_name=${font_url##*/} && \
@@ -40,33 +40,34 @@ function install_fonts() {
 }
 
 function update() {
-  title0 "Update system and devbox packages"
+  gum style --bold --border normal --border-foreground 212 --foreground 212 --padding "0 1" "Update system and devbox packages"
   devbox version update
   eval "$(devbox global shellenv --recompute)"
   refresh-global
   devbox global update
   [[ -f "./devbox.json" ]] && devbox update
   refresh-global
-  update_aws_sso_cli
-  kubectl krew upgrade
-  ok
+  krew upgrade
+  gum style --foreground 2 "OK"
 }
 
 function backup() {
   sudo cp -Lr "${HOME}/.bash_history" "${HOME}/.bash_env" "${HOME}/.bash_custom" "${HOME}/.bash_aliases" \
     "${HOME}/.config/starship.toml" "${HOME}/.gitconfig" "${HOME}/.aws" \
     /etc/cntlm.conf "$(devbox global path)/devbox.json" \
+    "${HOME}/.config/opencode/opencode.json" \
+    "${HOME}/.config/opencode/opencode-notifier.json" \
+    "${HOME}/.agents/rules/personal-rules.md" \
     /mnt/d/sharedfolder
+    # /mnt/c/Users/myuser/AppData/Roaming/Code/User/keybindings.json \
     sudo mkdir -p /mnt/d/sharedfolder/.ssh
     for file in "${HOME}/.ssh/"*; do
       filename=$(basename "$file")
-      sudo rm -f "/mnt/d/sharedfolder/.ssh/$filename"
-      sudo cp -L "$file" "/mnt/d/sharedfolder/.ssh/$filename"
+      [[ ! -f "/mnt/d/sharedfolder/.ssh/$filename" ]] && sudo cp -L "$file" "/mnt/d/sharedfolder/.ssh/$filename"
     done
     for file in "${HOME}/.gpg/"*; do
       filename=$(basename "$file")
-      sudo rm -f "/mnt/d/sharedfolder/.gpg/$filename"
-      sudo cp -L "$file" "/mnt/d/sharedfolder/.gpg/$filename"
+      [[ ! -f "/mnt/d/sharedfolder/.gpg/$filename" ]] && sudo cp -L "$file" "/mnt/d/sharedfolder/.gpg/$filename"
     done
 
   sudo mkdir -p /mnt/d/sharedfolder/.kube
@@ -86,10 +87,10 @@ function backup() {
 }
 
 function free_space() {
-  title0 "Free space"
-  echo -e "${GRAY}Disk space before cleaning :"
-  df -h /dev/sda2
-  echo "------------------------------------------------${DEFAULT}"
+  gum style --bold --border normal --border-foreground 212 --foreground 212 --padding "0 1" "Free space"
+  gum style --foreground 8 "=> Disk space before cleaning :"
+  df -h /
+  echo
   sudo apt-get -y clean
   sudo apt -y autoclean
   sudo apt-get -y autoremove --purge
@@ -101,17 +102,17 @@ function free_space() {
   docker system prune -a -f --volumes
   for item in $(find "${HOME}" -name ".terraform" -type d | grep -E "^/home"); do rm -rf "$item"; done
   devbox global run -- nix store gc --extra-experimental-features nix-command
-  echo "${GRAY}------------------------------------------------"
-  echo "Disk space after cleaning :"
-  df -h /dev/sda2
-  echo "------------------------------------------------${DEFAULT}"
+  echo
+  gum style --foreground 8 "=> Disk space after cleaning :"
+  df -h /
 }
 
 function github_api_rate_limit {
-  echo -n "${GRAY}GitHub API remaining calls : ${DEFAULT}"
-  curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit | jq '.rate.remaining'
-  echo -n "${GRAY}GitHub API reset time : ${DEFAULT}"
-  curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit | jq -r '.rate.reset' | xargs -I{} date -d @{}
+  local remaining reset_time
+  remaining=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit | jq '.rate.remaining')
+  reset_time=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/rate_limit | jq -r '.rate.reset' | xargs -I{} date -d @{})
+  printf "%s " "GitHub API remaining calls :"; gum style --foreground 8 "$remaining"
+  printf "%s " "GitHub API reset time :"; gum style --foreground 8 "$reset_time"
 }
 
 ########################################
@@ -191,32 +192,58 @@ function debug {
 ########################################
 #                Jenkins
 ########################################
+function get_jenkins_job_name() {
+  git_root_folder=${1:-$(pwd)}
+  include_branch_name=${2:-false}
+
+  pushd "${git_root_folder}" > /dev/null || return
+  git_url=$(git remote get-url origin)
+  git_branch=$(git rev-parse --abbrev-ref HEAD)
+  popd > /dev/null 2>&1 || true
+
+  git_project_name=$(echo "$git_url" | perl -lne 'print $1 if /git@.+:(.+)\.git/')
+  if [[ $git_project_name == "" ]]
+  then
+    gum style --foreground 1 "Malformed git URL: '$git_url' doesn't match 'git@xxx:xxx.git'"
+    return 1
+  fi
+  jenkins_organization_name="$(echo "${git_project_name%%/*}" | tr '[:lower:]' '[:upper:]')"
+  encoded_branch="${git_branch//\//%252F}"
+  if [[ $include_branch_name == "false" ]]
+  then
+    echo -n "${jenkins_organization_name}/${git_project_name//\//%2F}"
+  else
+    echo -n "${jenkins_organization_name}/${git_project_name//\//%2F}/${encoded_branch}"
+  fi
+}
+
 function get_jenkins_job_url() {
   git_root_folder=${1:-$(pwd)}
   get_root_url=${2:-false}
 
   pushd "${git_root_folder}" > /dev/null || return
   git_url=$(git remote get-url origin)
-  git_branch=$(git rev-parse --abrev-ref HEAD)
+  git_branch=$(git rev-parse --abbrev-ref HEAD)
   popd > /dev/null 2>&1 || true
 
   git_project_name=$(echo "$git_url" | perl -lne 'print $1 if /git@.+:(.+)\.git/')
   if [[ $git_project_name == "" ]]
   then
-    echo -e "${RED}Error, malformed git URL : '$git_url' don't match 'git@xxx:xxx.git'"
+    gum style --foreground 1 "Malformed git URL: '$git_url' doesn't match 'git@xxx:xxx.git'"
     return 1
   fi
   jenkins_organization_name="$(echo "${git_project_name%%/*}" | tr '[:lower:]' '[:upper:]')"
+  encoded_branch="${git_branch//\//%252F}"
   if [[ $get_root_url == "true" ]]
   then
-    echo -n "https://${JENKINS_GTP_HOSTNAME}/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}"
+    echo -n "https://${JENKINS_HOSTNAME}/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}"
   else
-    echo -n "https://${JENKINS_GTP_HOSTNAME}/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}/job/${git_branch}"
+    echo -n "https://${JENKINS_HOSTNAME}/job/${jenkins_organization_name}/job/${git_project_name//\//%2F}/job/${encoded_branch}"
   fi
 }
 
 function allow_jenkins_slave_ssh() {
-  ssh "admin@${JENKINS_GTP_HOSTNAME}" << EOF
+  ssh "admin@${JENKINS_HOSTNAME}" << EOF
 sudo sed -i 's/^AllowTcpForwarding.*/AllowTcpForwarding yes/' /etc/ssh/sshd_config
 sudo systemctl restart sshd
 EOF
@@ -228,27 +255,21 @@ function trigger_jenkins() {
 }
 
 function trigger_jenkins_scan() {
-  username=$JENKINS_GTP_USER
-  password=$JENKINS_GTP_API_TOKEN
+  username=$JENKINS_USER
+  password=$JENKINS_API_TOKEN
   job_root_url=$(get_jenkins_job_url '' 'true')
+  echo "=> Trigger Jenkins scan for job '${job_root_url}'"
   curl -u "$username:$password" -X POST "$job_root_url/build"
 }
 
 function trigger_jenkins_job() {
-  username=$JENKINS_GTP_USER
-  password=$JENKINS_GTP_API_TOKEN
-  job_root_url=$(get_jenkins_job_url)
-
-  JENKINS_HOSTNAME=${JENKINS_GTP_HOSTNAME}
-  current_git_branch=$2
-  [[ $current_git_branch == "" ]] && current_git_branch=$(git rev-parse --abbrev-ref HEAD)
-  job=${job_root_url#*/job/}
-  job=${job//\/job/}
-  job=${job//$(get_main_branch_name)/$current_git_branch}
+  username=$JENKINS_USER
+  password=$JENKINS_API_TOKEN
+  job_name=$(get_jenkins_job_name '' 'true')
   jenkins_cli_jar_path=$(mktemp --suffix=.jar)
   wget -q "https://${JENKINS_HOSTNAME}/jnlpJars/jenkins-cli.jar" -O "${jenkins_cli_jar_path}"
-  echo "=> Trigger Jenkins job '${job}'"
-  java -jar "$jenkins_cli_jar_path" -http -s "https://${JENKINS_HOSTNAME}" -auth "${username}:${password}" build "$job"
+  echo "=> Trigger Jenkins job '${job_name}'"
+  java -jar "$jenkins_cli_jar_path" -http -s "https://${JENKINS_HOSTNAME}" -auth "${username}:${password}" build "$job_name"
 }
 
 ########################################
@@ -297,7 +318,7 @@ function git_propagate_commits() {
   target_branch=$1
   if [[ -z $target_branch ]]
   then
-    echo "${RED}[ERROR] target_branch is required"
+    gum style --foreground 1 "target_branch is required"
     return 1
   fi
   current_branch=$(git rev-parse --abbrev-ref HEAD)
@@ -339,17 +360,41 @@ function git_reset_to_origin() {
 }
 
 function deleteOldBranches() {
-  git fetch -p
-  git branch -vv | grep -E ': (disparue|gone)]' | grep -v "\*" | awk '{ print $1; }' | xargs -r git branch -D
+  if ! timeout 15 git fetch -p
+  then
+    gum style --foreground 1 "Skipping $(basename "$(git rev-parse --show-toplevel)"): git fetch -p timed out or failed (remote unreachable?)"
+    return 1
+  fi
+
+  gone_branches=$(git branch -vv | grep -E ': (disparue|gone)]' | awk '{ print ($1 == "*" ? $2 : $1); }')
+  [[ -n "$gone_branches" ]] || { [[ $SILENT ]] || git --no-pager branch -a; return 0; }
+
+  current_branch=$(git branch --show-current)
+  if grep -qx "$current_branch" <<< "$gone_branches"
+  then
+    default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
+    [[ -n "$default_branch" ]] || { git show-ref --verify --quiet refs/heads/main && default_branch=main; }
+    [[ -n "$default_branch" ]] || { git show-ref --verify --quiet refs/heads/master && default_branch=master; }
+    if [[ -z "$default_branch" || "$default_branch" == "$current_branch" ]]
+    then
+      gum style --foreground 1 "Cannot delete current branch '$current_branch' in $(basename "$(git rev-parse --show-toplevel)"): no default branch found to switch to"
+      gone_branches=$(grep -vx "$current_branch" <<< "$gone_branches")
+    else
+      git checkout "$default_branch"
+    fi
+  fi
+
+  xargs -r git branch -D <<< "$gone_branches"
+
   if [[ ! $SILENT ]]
   then
-    branches=$(git branch -a)
+    branches=$(git --no-pager branch -a)
     echo "$branches"
   fi
 }
 
 function deleteOldBranchesInEachRepo() {
-  title0 "Delete old git branches in each repository"
+  gum style --bold --border normal --border-foreground 212 --foreground 212 --padding "0 1" "Delete old git branches in each repository"
   for git_folder in "${HOME}/dev/"*/.git
   do
     [[ -d "$git_folder" ]] || continue
@@ -366,7 +411,7 @@ function clonecode() {
   fi
   if [[ "$target_dir" == "" ]]
   then
-    echo -e "${RED}Error, malformed git URL : '$git_url' don't match 'git@xxx:xxx.git' nor 'https://xxx/xxx.git'"
+    gum style --foreground 1 "Malformed git URL: '$git_url' doesn't match 'git@xxx:xxx.git' nor 'https://xxx/xxx.git'"
     return 1
   fi
   if [[ ! -d "${HOME}/dev/$target_dir" ]]
@@ -381,7 +426,7 @@ function clonecode() {
 function custom_rebase() {
   if [[ "$1" == "" ]];
   then
-    echo -e "${RED}Error, one argument required : git ref of new desired base"
+    gum style --foreground 1 "one argument required: git ref of new desired base"
     return 1
   fi
   tmp=$(mktemp)
@@ -399,7 +444,7 @@ function cross_cherry_pick() {
   source_repo_name=$1
   if [[ "$source_repo_name" == "" ]];
   then
-    echo -e "${RED}Error, one argument required : git repo name that contains the commit to import"
+    gum style --foreground 1 "one argument required: git repo name that contains the commit to import"
     return 1
   fi
   gitlab_hostname=${3}
@@ -431,22 +476,22 @@ function clock_sync() {
 function check_internet_connection() {
   if [[ "$(curl -m 5 -L -s -o /dev/null -I -w '%{http_code}' http://www.google.fr)" == "200" ]]
   then
-    echo -e "${GREEN}OK"
+    gum style --foreground 2 "OK"
     return 0
   else
-    echo -e "${RED}KO"
+    gum style --foreground 1 "KO"
     return 1
   fi
 }
 
 # Check corporate access, fail after 15s
 function check_corporate_connection() {
-  if [[ "$(curl -m 5 -L -s -o /dev/null -I -w '%{http_code}' https://xxx)" == "200" ]]
+  if [[ "$(curl -m 5 -L -s -o /dev/null -I -w '%{http_code}' https://confluence.internal.cdsf.io)" == "200" ]]
   then
-    echo -e "${GREEN}OK"
+    gum style --foreground 2 "OK"
     return 0
   else
-    echo -e "${RED}KO"
+    gum style --foreground 1 "KO"
     return 1
   fi
 }
@@ -455,23 +500,22 @@ function check_corporate_connection() {
 function check_dns() {
   if dig +short www.google.fr +time=5 +tries=3 > /dev/null
   then
-    echo -e "${GREEN}OK"
+    gum style --foreground 2 "OK"
     return 0
   else
-    echo -e "${RED}KO"
+    gum style --foreground 1 "KO"
     return 1
   fi
 }
 
 alias prs='proxy_status'
 function proxy_status() {
-  echo -en "${DEFAULT}WSL-VPNKIT : ${GREEN}"; sudo systemctl is-active wsl-vpnkit
-  echo -en "${DEFAULT}CNTLM : ${GREEN}"; sudo systemctl is-active cntlm
-  echo -en "${DEFAULT}GOST : ${GREEN}"; sudo systemctl is-active gost
-  echo -en "${DEFAULT}INTERNET CONNECTION : "; check_internet_connection
-  echo -en "${DEFAULT}CORPORATE_CONNECTION : "; check_corporate_connection
-  echo -en "${DEFAULT}DNS_CONNECTION : "; check_dns
-  echo -en "${DEFAULT}"
+  printf "%s " "WSL-VPNKIT :"; sudo systemctl is-active wsl-vpnkit | xargs gum style --foreground 2
+  printf "%s " "CNTLM :"; sudo systemctl is-active cntlm | xargs gum style --foreground 2
+  printf "%s " "GOST :"; sudo systemctl is-active gost | xargs gum style --foreground 2
+  printf "%s " "INTERNET CONNECTION :"; check_internet_connection
+  printf "%s " "CORPORATE_CONNECTION :"; check_corporate_connection
+  printf "%s " "DNS_CONNECTION :"; check_dns
 }
 
 # Proxy management
@@ -493,7 +537,7 @@ function docker_prune() {
     docker image prune
 }
 function docker_run() {
-    docker run --rm -it --network=host -u root -v "$(pwd):/current" -w /current --entrypoint "" -v "${HOME}/.ssh:/root/.ssh" -v "${HOME}/.aws:/root/.aws" -e AWS_PROFILE -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e ANSIBLE_SSH_ARGS="-F /dev/null" "$@"
+    docker run --rm -it --network=host -u root -v "$(pwd):/current" -w /current --entrypoint "" -v "${HOME}/.ssh:/root/.ssh:ro" -v "${HOME}/.aws:/root/.aws:ro" -e AWS_PROFILE -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e ANSIBLE_SSH_ARGS="-F /dev/null" "$@"
 }
 function docker_bash() {
     docker_run "$1" bash
@@ -511,8 +555,6 @@ alias dob='docker_bash'
 alias dos='docker_sh'
 alias doi='docker images'
 alias doe='docker_enter'
-
-alias push_to_all_ecr='$HOME/dev/oam.builds.jenkins.shared-lib.common/resources/gtp/push_to_ecr.sh -e all -i '
 
 # Portainer
 alias portainer='docker run -d -p 9001:9000 --name portainer -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer'
@@ -574,6 +616,7 @@ function open_cloud_init() {
   # shellcheck disable=SC2001
   ip=$(echo "${1?}" | sed 's/ip-\([0-9]\{1,3\}-[0-9]\{1,3\}-[0-9]\{1,3\}-[0-9]\{1,3\}\).*/\1/')
   ip=${ip//-/.}
+  "$HOME/dev/oam.k8s.infra/k8s-scripts/send-ssh-public-key" "$ip" || true
   temp_file=$(mktemp --suffix=.log)
   scp "${ip}:/var/log/cloud-init-output.log" "$temp_file"
   code "$temp_file"
@@ -766,15 +809,15 @@ function manage_pgp() {
 #################################
 
 function check_aws_connection() {
-  echo -en "${DEFAULT}Check AWS connection using '${1:=current}' profile : "
+  printf "%s " "Check AWS connection using '${1:=current}' profile :"
   [[ $1 != "" ]] && profile_param="--profile $1"
   # shellcheck disable=SC2086
   if eval "aws sts get-caller-identity $profile_param"
   then
-    echo -e "${GREEN}OK"
+    gum style --foreground 2 "OK"
     return 0
   else
-    echo -e "${RED}KO"
+    gum style --foreground 1 "KO"
     return 1
   fi
 }
