@@ -99,7 +99,7 @@ then
   free_space
 fi
 
-if [[ ! -f "$HOME/.last_deleteOldBranches" || $(cat "$HOME/.last_deleteOldBranches") -lt $(date -d '4 week ago' '+%s') ]]
+if [[ ! -f "$HOME/.last_deleteOldBranches" || $(cat "$HOME/.last_deleteOldBranches") -lt $(date -d '1 day ago' '+%s') ]]
 then
   date '+%s' > "$HOME/.last_deleteOldBranches"
   SILENT=1 deleteOldBranchesInEachRepo
