@@ -41,6 +41,7 @@
     "wget@latest",
     "xdg-utils@latest",
     "yq-go@latest",
-    "zoxide@latest"
+    "zoxide@latest",
+    "pass@latest"
   ]
 }
