@@ -40,7 +40,25 @@ shopt -s histappend                # append au lieu d'écraser à la fermeture d
 # Load environment variables
 # #####################################
 # shellcheck disable=SC1091
-. "$HOME/.bash_env"
+
+# --- pass-based secret loading ---
+# loadenv <name>  -> source secrets stored at env/<name>;  loadenv (no arg) lists them.
+# loadenv() {
+#   if [ -z "${1:-}" ]; then echo "Available:"; pass ls env 2>/dev/null | sed '1d'; return 0; fi
+#   local out; out="$(pass show "env/$1")" || { echo "loadenv: no env/$1" >&2; return 1; }
+#   source <(printf '%s\n' "$out")
+# }
+# _loadenv_complete() {
+#   local cur="${COMP_WORDS[COMP_CWORD]}" d="${PASSWORD_STORE_DIR:-$HOME/.password-store}/env"
+#   COMPREPLY=( $(compgen -W "$(cd "$d" 2>/dev/null && ls *.gpg 2>/dev/null | sed 's/\.gpg$//')" -- "$cur") )
+# }
+# complete -F _loadenv_complete loadenv
+
+# --- auto-load ~/.bash_env secrets on every shell startup ---
+# Secrets inside now come from `pass` (env/*); if the vault is locked this is a
+# no-op decrypt failure per-var (empty value) rather than a hang, since gpg-agent
+# is configured with pinentry-tty + preset-passphrase (see unlock-gpg above).
+# [ -f "$HOME/.bash_env" ] && . "$HOME/.bash_env"
 
 # #####################################
 # Load aliases
