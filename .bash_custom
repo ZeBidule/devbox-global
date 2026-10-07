@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # #####################################
 # Exit early if not interactive
 # #####################################
@@ -12,6 +14,14 @@
 # Optionally: only run in specific terminals
 # [[ "$TERM_PROGRAM" == "vscode" ]] && do_something
 
+# #####################################
+# NVM env
+# #####################################
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# Force nvm default version — devbox shellenv hardcodes the old nvm path, so we re-apply the default here
+nvm use default > /dev/null 2>&1
 
 # #####################################
 # Load devbox tools
@@ -41,24 +51,36 @@ shopt -s histappend                # append au lieu d'écraser à la fermeture d
 # #####################################
 # shellcheck disable=SC1091
 
+# --- silence benign gpg/gpg-agent version-mismatch warning ---
+# pass's nix build bundles a newer gpg (gnupg-2.4.9) than the system gpg-agent
+# daemon (2.4.4, started by systemd from /usr/bin/gpg-agent). This is a harmless
+# protocol-compatible mismatch, but gpg prints a WARNING line to stderr on every
+# `pass` call. Wrap `pass` (not `gpg`: pass's nix wrapper deliberately strips
+# BASH_FUNC_* env vars before its internal exec as a Shellshock-style hardening,
+# so a `gpg` function override never reaches it) to drop only that exact line;
+# everything else (incl. real pass/gpg errors) still passes through untouched.
+pass() {
+  command pass "$@" 2> >(grep -v "^gpg: WARNING: server 'gpg-agent' is older than us" >&2)
+}
+
 # --- pass-based secret loading ---
 # loadenv <name>  -> source secrets stored at env/<name>;  loadenv (no arg) lists them.
-# loadenv() {
-#   if [ -z "${1:-}" ]; then echo "Available:"; pass ls env 2>/dev/null | sed '1d'; return 0; fi
-#   local out; out="$(pass show "env/$1")" || { echo "loadenv: no env/$1" >&2; return 1; }
-#   source <(printf '%s\n' "$out")
-# }
-# _loadenv_complete() {
-#   local cur="${COMP_WORDS[COMP_CWORD]}" d="${PASSWORD_STORE_DIR:-$HOME/.password-store}/env"
-#   COMPREPLY=( $(compgen -W "$(cd "$d" 2>/dev/null && ls *.gpg 2>/dev/null | sed 's/\.gpg$//')" -- "$cur") )
-# }
-# complete -F _loadenv_complete loadenv
+loadenv() {
+  if [ -z "${1:-}" ]; then echo "Available:"; pass ls env 2>/dev/null | sed '1d'; return 0; fi
+  local out; out="$(pass show "env/$1")" || { echo "loadenv: no env/$1" >&2; return 1; }
+  source <(printf '%s\n' "$out")
+}
+_loadenv_complete() {
+  local cur="${COMP_WORDS[COMP_CWORD]}" d="${PASSWORD_STORE_DIR:-$HOME/.password-store}/env"
+  COMPREPLY=( $(compgen -W "$(cd "$d" 2>/dev/null && ls *.gpg 2>/dev/null | sed 's/\.gpg$//')" -- "$cur") )
+}
+complete -F _loadenv_complete loadenv
 
 # --- auto-load ~/.bash_env secrets on every shell startup ---
 # Secrets inside now come from `pass` (env/*); if the vault is locked this is a
 # no-op decrypt failure per-var (empty value) rather than a hang, since gpg-agent
 # is configured with pinentry-tty + preset-passphrase (see unlock-gpg above).
-# [ -f "$HOME/.bash_env" ] && . "$HOME/.bash_env"
+[ -f "$HOME/.bash_env" ] && . "$HOME/.bash_env"
 
 # #####################################
 # Load aliases
