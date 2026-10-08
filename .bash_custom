@@ -145,6 +145,11 @@ then
   SILENT=1 deleteOldBranchesInEachRepo
 fi
 
+if [[ ! -f "$HOME/.last_unlock_gpg" || $(cat "$HOME/.last_unlock_gpg") != "$(date '+%Y%m%d')" ]]
+then
+  unlock-gpg && date '+%Y%m%d' > "$HOME/.last_unlock_gpg"
+fi
+
 # abandonned for perfomance issue : if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
 if [[ ! -f "$HOME/.last_sfa_login" || $(cat "$HOME/.last_sfa_login") != "$(date '+%Y%m%d')" ]]
 then
