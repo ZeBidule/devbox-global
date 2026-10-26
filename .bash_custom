@@ -127,7 +127,7 @@ then
   update
 fi
 
-if [[ ! -f "$HOME/.last_backup" || $(cat "$HOME/.last_backup") -lt $(date -d '1 day ago' '+%s') ]]
+if [[ ! -f "$HOME/.last_backup" || $(cat "$HOME/.last_backup") -lt $(date -d '3 day ago' '+%s') ]]
 then
   date '+%s' > "$HOME/.last_backup"
   backup
