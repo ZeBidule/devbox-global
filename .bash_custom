@@ -121,41 +121,39 @@ eval "$(starship init bash)"
 #   proxy_start
 # fi
 
-if [[ ! -f "$HOME/.last_update" || $(cat "$HOME/.last_update") -lt $(date -d '1 week ago' '+%s') ]]
-then
-  date '+%s' > "$HOME/.last_update"
-  update
+# Run a periodic task once across concurrently started shells (e.g. Warp opening several tabs).
+# _once <name> <stamp-file> <max-age-seconds|day> <command...>
+# flock -n: first shell wins, others skip; lock auto-released if the shell dies.
+_once() {
+  local name=$1 stamp=$2 age=$3; shift 3
+  local fd last
+  mkdir -p ~/.cache
+  exec {fd}>"$HOME/.cache/lock.$name"
+  if flock -n "$fd"; then
+    last=$(cat "$stamp" 2>/dev/null)
+    if [[ $age == day ]]; then
+      if [[ $last != "$(date +%Y%m%d)" ]]; then "$@" && date +%Y%m%d > "$stamp"; fi
+    else
+      if [[ -z $last || $last -lt $(( $(date +%s) - age )) ]]; then date +%s > "$stamp"; "$@"; fi
+    fi
+  else
+    [[ $- == *i* ]] && echo "_once: '$name' already running in another shell, skipped" >&2
+  fi
+  exec {fd}>&-
+  return 0
+}
+
+_sfa_login() { sfa && aws sts get-caller-identity --profile sfa > /dev/null 2>&1; }
+_delete_old_branches_silent() { SILENT=1 deleteOldBranchesInEachRepo; }
+
+# Tasks that may prompt: only from a visible Warp session. Hidden shells (e.g. the
+# /bin/login -f WSL session, no WARP_* env) would win the lock and block on the prompt.
+if [[ $- == *i* && -n $WARP_TERMINAL_SESSION_UUID ]]; then
+  _once sfa ~/.last_sfa_login day _sfa_login
+  _once gpg ~/.last_unlock_gpg day unlock-gpg
 fi
 
-if [[ ! -f "$HOME/.last_backup" || $(cat "$HOME/.last_backup") -lt $(date -d '3 day ago' '+%s') ]]
-then
-  date '+%s' > "$HOME/.last_backup"
-  backup
-fi
-
-if [[ ! -f "$HOME/.last_free_space" || $(cat "$HOME/.last_free_space") -lt $(date -d '1 week ago' '+%s') ]]
-then
-  date '+%s' > "$HOME/.last_free_space"
-  free_space
-fi
-
-if [[ ! -f "$HOME/.last_deleteOldBranches" || $(cat "$HOME/.last_deleteOldBranches") -lt $(date -d '1 day ago' '+%s') ]]
-then
-  date '+%s' > "$HOME/.last_deleteOldBranches"
-  SILENT=1 deleteOldBranchesInEachRepo
-fi
-
-if [[ ! -f "$HOME/.last_unlock_gpg" || $(cat "$HOME/.last_unlock_gpg") != "$(date '+%Y%m%d')" ]]
-then
-  unlock-gpg && date '+%Y%m%d' > "$HOME/.last_unlock_gpg"
-fi
-
-# abandonned for perfomance issue : if ! aws sts get-caller-identity --profile sfa > /dev/null 2>&1
-if [[ ! -f "$HOME/.last_sfa_login" || $(cat "$HOME/.last_sfa_login") != "$(date '+%Y%m%d')" ]]
-then
-  # read -r -p "Ready to launch sfa login? Press y to continue (Ctrl+C to skip): " -n 1 -s
-  # echo
-  # [[ $REPLY == "y" || $REPLY == "Y" ]] || return
-  sfa
-  aws sts get-caller-identity --profile sfa > /dev/null 2>&1 && date '+%Y%m%d' > "$HOME/.last_sfa_login"
-fi
+_once update   ~/.last_update              604800 update
+_once backup   ~/.last_backup              259200 backup
+_once free     ~/.last_free_space          604800 free_space
+_once branches ~/.last_deleteOldBranches   86400  _delete_old_branches_silent
