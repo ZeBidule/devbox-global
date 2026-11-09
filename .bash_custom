@@ -154,6 +154,7 @@ if [[ $- == *i* && -n $WARP_TERMINAL_SESSION_UUID ]]; then
 fi
 
 _once update   ~/.last_update              604800 update
+_once skills   ~/.last_skills_update       day    update_agent_configuration
 _once backup   ~/.last_backup              259200 backup
 _once free     ~/.last_free_space          604800 free_space
 _once branches ~/.last_deleteOldBranches   86400  _delete_old_branches_silent
